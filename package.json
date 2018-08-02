@@ -2,7 +2,9 @@
   "name": "rx-synchronizer",
   "version": "1.0.0",
   "description": "Commonly-used synchronizer bases that can be composed into more specific purposes.",
-  "main": "index.js",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "typings": "./dist/src/index.d.ts",
   "scripts": {
     "test": "jest"
   },
