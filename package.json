@@ -6,7 +6,12 @@
   "types": "./dist/src/index.d.ts",
   "typings": "./dist/src/index.d.ts",
   "scripts": {
-    "test": "jest"
+    "setup": "npm install",
+    "build": "tsc",
+    "buildPublish": "tsc && npm publish",
+    "test": "tsc && jest --coverage",
+    "coveralls": "cat ./coverage/lcov.info | coveralls",
+    "prepublish": "rm -rf ./dist && tsc"
   },
   "repository": {
     "type": "git",
