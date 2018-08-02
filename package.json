@@ -1,0 +1,35 @@
+{
+  "name": "rx-synchronizer",
+  "version": "1.0.0",
+  "description": "Commonly-used synchronizer bases that can be composed into more specific purposes.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/protoman92/rx-synchronizer-js.git"
+  },
+  "keywords": [
+    "rxjs",
+    "synchronizer"
+  ],
+  "author": "Hai Pham",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/protoman92/rx-synchronizer-js/issues"
+  },
+  "homepage": "https://github.com/protoman92/rx-synchronizer-js#readme",
+  "dependencies": {
+    "deep-equal": "^1.0.1",
+    "javascriptutilities": "^1.5.8",
+    "rx-utilities-js": "^1.0.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^23.3.1",
+    "@types/node": "^10.5.5",
+    "jest": "^23.4.2",
+    "ts-jest": "^23.0.1",
+    "ts-mockito-2": "^2.2.8"
+  }
+}
