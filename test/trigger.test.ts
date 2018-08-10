@@ -1,26 +1,26 @@
-import { Depn as CleanUpDepn, Impl as CleanUpSync } from 'cleanup';
 import { IGNORE, Ignore, Numbers, Try } from 'javascriptutilities';
 import { NEVER, NextObserver, Subject } from 'rxjs';
+import { Depn as TriggerDepn, Impl as TriggerSync } from 'trigger';
 import { anything, instance, spy, verify, when } from 'ts-mockito-2';
 
-describe('Clean up sync should work correctly', () => {
-  let dependency: CleanUpDepn;
-  let synchronizer: CleanUpSync;
-  let cleanUpReceiver: NextObserver<Ignore>;
+describe('Trigger sync should work correctly', () => {
+  let dependency: TriggerDepn;
+  let synchronizer: TriggerSync;
+  let triggerReceiver: NextObserver<Ignore>;
 
   beforeEach(() => {
-    cleanUpReceiver = spy({ next: () => { } });
+    triggerReceiver = spy({ next: () => { } });
 
     dependency = spy({
-      cleanUpReceiver: { ...instance(cleanUpReceiver) },
+      triggerReceiver: { ...instance(triggerReceiver) },
       triggerStream: NEVER,
       stopStream: NEVER,
     });
 
-    synchronizer = new CleanUpSync();
+    synchronizer = new TriggerSync();
   });
 
-  it('Sending clean up trigger result fails - should invoke cleanup', () => {
+  it('Sending trigger - should invoke trigger receiver', () => {
     /// Setup
     let triggerStream = new Subject<Ignore>();
     when(dependency.triggerStream).thenReturn(triggerStream);
@@ -30,7 +30,7 @@ describe('Clean up sync should work correctly', () => {
     triggerStream.next(IGNORE);
 
     /// Then
-    verify(cleanUpReceiver.next(anything())).once();
+    verify(triggerReceiver.next(anything())).once();
   });
 
   it('Sending stop signal - should unsubscribe all streams', () => {
@@ -47,6 +47,6 @@ describe('Clean up sync should work correctly', () => {
     Numbers.range(10, 1000).forEach((v => triggerStream.next(Try.success(v))));
 
     /// Then
-    verify(cleanUpReceiver.next(anything())).once();
+    verify(triggerReceiver.next(anything())).once();
   });
 });

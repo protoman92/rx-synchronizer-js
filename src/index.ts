@@ -1,5 +1,5 @@
-import * as CleanUpSync from './cleanup';
+import * as TriggerSync from 'trigger';
 import * as FetchSync from './fetch';
 import * as ModifySync from './modify';
 import * as ValidateSync from './validate';
-export { CleanUpSync, FetchSync, ModifySync, ValidateSync };
+export { FetchSync, ModifySync, TriggerSync, ValidateSync };

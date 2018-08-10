@@ -1,6 +1,6 @@
 {
   "name": "rx-synchronizer",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Commonly-used synchronizer bases that can be composed into more specific purposes.",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -8,7 +8,6 @@
   "scripts": {
     "setup": "npm install",
     "build": "tsc",
-    "buildPublish": "tsc && npm publish",
     "test": "tsc && jest --coverage",
     "coveralls": "cat ./coverage/lcov.info | coveralls",
     "prepublish": "rm -rf ./dist && tsc"

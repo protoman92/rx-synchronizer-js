@@ -4,12 +4,12 @@ import { takeUntil } from 'rxjs/operators';
 
 export interface Depn {
   readonly triggerStream: Observable<Ignore>;
-  readonly cleanUpReceiver: NextObserver<Ignore>;
+  readonly triggerReceiver: NextObserver<Ignore>;
   readonly stopStream: Observable<Ignore>;
 }
 
 /**
- * Synchronizer that performs some clean-up on trigger.
+ * Synchronizer that performs some action on trigger.
  */
 export interface Type {
   synchronize(dependency: Depn): void;
@@ -27,6 +27,6 @@ export class Impl implements Type {
 
     subscription.add(dependency.triggerStream
       .pipe(takeUntil(dependency.stopStream))
-      .subscribe(dependency.cleanUpReceiver));
+      .subscribe(dependency.triggerReceiver));
   }
 }
