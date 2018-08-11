@@ -12,7 +12,7 @@ export interface Depn<Param = Ignore> {
  * Synchronizer that performs some action on trigger.
  */
 export interface Type {
-  synchronize(dependency: Depn): void;
+  synchronize<Param = Ignore>(dependency: Depn<Param>): void;
 }
 
 export class Impl implements Type {
