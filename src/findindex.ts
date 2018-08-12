@@ -17,11 +17,15 @@ export interface Depn<T> extends Omit<TriggerDepn<number>, ExcludedKeys> {
   readonly objectIndexReceiver: NextObserver<Nullable<number>>;
 }
 
+export interface Type {
+  synchronize<T>(dependency: Depn<T>): void;
+}
+
 /**
  * Find the index of some object among an array of objects (based on a specified
  * property) and emit that.
  */
-export class Impl {
+export class Impl implements Type {
   private readonly triggerSync: TriggerSync;
 
   public constructor(triggerSync: TriggerSync) {
