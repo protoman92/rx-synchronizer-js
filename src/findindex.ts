@@ -11,8 +11,14 @@ export interface Depn<T> extends Omit<TriggerDepn<number>, ExcludedKeys> {
    * If this is true, invalid results will not be filtered out.
    */
   readonly allowInvalidResult: boolean;
+
+  /**
+   * Consider an object a match if any of the key defined in this Array has a
+   * match.
+   */
+  readonly objectPropKeys: keyof T | (keyof T)[];
+
   readonly allObjectStream: Observable<Try<Partial<T>[]>>;
-  readonly objectPropKey: keyof T;
   readonly objectPropStream: Observable<Try<any>>;
   readonly objectIndexReceiver: NextObserver<Nullable<number>>;
 }
@@ -33,7 +39,13 @@ export class Impl implements Type {
   }
 
   public synchronize<T>(dependency: Depn<T>) {
-    let key = dependency.objectPropKey;
+    let keys: (keyof T)[];
+
+    if (dependency.objectPropKeys instanceof Array) {
+      keys = dependency.objectPropKeys;
+    } else {
+      keys = [dependency.objectPropKeys];
+    }
 
     this.triggerSync.synchronize<Nullable<number>>({
       ...dependency as Omit<Depn<T>,
@@ -41,7 +53,7 @@ export class Impl implements Type {
       'allowInvalidResult' |
       'objectIndexReceiver' |
       'objectPropStream' |
-      'objectPropKey'>,
+      'objectPropKeys'>,
       triggerReceiver: dependency.objectIndexReceiver,
       triggerStream: combineLatest(
         dependency.allObjectStream,
@@ -49,8 +61,18 @@ export class Impl implements Type {
           return deepEqual(v1.value, v2.value);
         })),
         (v1, v2) => v1.zipWith(v2, (objects, prop) => {
-          return Collections.indexOf(objects, { [key]: prop } as Partial<T>, (v3, v4) => {
-            return deepEqual(v3[key], v4[key]);
+          let object2: Partial<T> = keys
+            .map(k => ({ [k]: prop }))
+            .reduce((acc, obj) => Object.assign(acc, obj)) as Partial<T>;
+
+          return Collections.indexOf(objects, object2, (v3, v4) => {
+            for (let key of keys) {
+              if (deepEqual(v3[key], v4[key])) {
+                return true;
+              }
+            }
+
+            return false;
           });
         }).flatMap(v => v),
       ).pipe(
