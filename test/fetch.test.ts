@@ -1,21 +1,19 @@
 import { Depn as FetchDepn, Impl as FetchSync } from 'fetch';
-import { IGNORE, Ignore, Numbers, Try } from 'javascriptutilities';
-import { doOnCompleted, doOnNext } from 'rx-utilities-js';
-import { NEVER, NextObserver, of, queueScheduler, Subject, throwError, timer } from 'rxjs';
-import { zip } from 'rxjs/operators';
-import { anything, instance, spy, verify, when } from 'ts-mockito-2';
+import { IGNORE, Ignore, Nullable, Numbers, Try } from 'javascriptutilities';
+import { NEVER, NextObserver, of, queueScheduler, Subject, throwError } from 'rxjs';
+import { anyOfClass, anything, instance, spy, verify, when } from 'ts-mockito-2';
 
 describe('Fetch sync should work correctly', () => {
   let dependency: FetchDepn<number, number>;
   let synchronizer: FetchSync;
-  let errorReceiver: NextObserver<Error>;
+  let errorReceiver: NextObserver<Nullable<Error>>;
   let progressReceiver: NextObserver<boolean>;
-  let resultReceiver: NextObserver<number>;
+  let resultReceiver: NextObserver<Nullable<number>>;
 
   beforeEach(() => {
-    errorReceiver = spy({ next: (_e: Error) => { } });
-    progressReceiver = spy({ next: (_v: boolean) => { } });
-    resultReceiver = spy({ next: (_v: number) => { } });
+    errorReceiver = spy({ next: () => { } });
+    progressReceiver = spy({ next: () => { } });
+    resultReceiver = spy({ next: () => { } });
 
     dependency = spy({
       allowDuplicateParams: false,
@@ -43,19 +41,14 @@ describe('Fetch sync should work correctly', () => {
     synchronizer.synchronize(instance(dependency));
 
     /// When
-    of(
-      Try.failure<number>(''),
-      Try.success(0),
-      Try.success(1),
-    ).pipe(
-      zip(timer(0, 100), (v1, _v2) => v1),
-      doOnNext(v => paramStream.next(v)),
-      doOnCompleted(() => {
-        /// Then
-        verify(errorReceiver.next(anything())).once();
-        verify(resultReceiver.next(anything())).once();
-      })
-    ).subscribe();
+    paramStream.next(Try.success(0));
+    paramStream.next(Try.success(1));
+    paramStream.next(Try.failure('Invalid param'));
+
+    /// Then
+    verify(errorReceiver.next(undefined)).once();
+    verify(errorReceiver.next(anyOfClass(Error))).twice();
+    verify(resultReceiver.next(anything())).once();
   });
 
   it('Fetching result succeeds - should notify results receiver', () => {

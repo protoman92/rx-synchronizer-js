@@ -1,6 +1,6 @@
-import { Indeterminate, Nullable, Try } from 'javascriptutilities';
+import { Nullable, Try } from 'javascriptutilities';
 import { catchJustReturn, mapNonNilOrEmpty } from 'rx-utilities-js';
-import { asapScheduler, merge, MonoTypeOperatorFunction, NextObserver, Observable, OperatorFunction, SchedulerLike, Subscription } from 'rxjs';
+import { asapScheduler, merge, MonoTypeOperatorFunction, NextObserver, Observable, of, OperatorFunction, SchedulerLike, Subscription } from 'rxjs';
 import { distinctUntilChanged, map, observeOn, share, switchMap, takeUntil } from 'rxjs/operators';
 
 export interface BaseDepn {
@@ -58,11 +58,18 @@ export class Impl implements Type {
           }));
         }
       })(),
-      mapNonNilOrEmpty(({ value }): Indeterminate<Param> => value),
-      map(v => dependency.fetchWithParam(v).pipe(
-        map(v1 => Try.success(v1)),
-        catchJustReturn(e => Try.failure(e))),
-      ),
+      map(param => {
+        try {
+          let actualParam = param.getOrThrow();
+
+          return dependency.fetchWithParam(actualParam).pipe(
+            map(v1 => Try.success(v1)),
+            catchJustReturn(e => Try.failure(e)),
+          );
+        } catch (e) {
+          return of(Try.failure(e));
+        }
+      }),
       observeOn(dependency.resultReceiptScheduler || asapScheduler),
       share(),
     );
