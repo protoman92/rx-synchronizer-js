@@ -24,15 +24,15 @@ describe('Progress sync should work correctly', () => {
 
   it('Triggering progress events - should emit flags sequentially', done => {
     /// Setup
-    let progressStartStream = new Subject<Ignore>();
-    let progressEndStream = new Subject<Ignore>();
+    let progressStartStream = new Subject<true>();
+    let progressEndStream = new Subject<false>();
     when(dependency.progressStartStream).thenReturn(progressStartStream);
     when(dependency.progressEndStream).thenReturn(progressEndStream);
     progressSync.synchronize(instance(dependency));
 
     /// When
-    progressStartStream.next(IGNORE);
-    progressEndStream.next(IGNORE);
+    progressStartStream.next(true);
+    progressEndStream.next(false);
 
     /// Then
     setTimeout(() => {
@@ -44,8 +44,8 @@ describe('Progress sync should work correctly', () => {
 
   it('Sending stop signal - should unsubscribe all streams', () => {
     /// Setup
-    let progressStartStream = new Subject<Ignore>();
-    let progressEndStream = new Subject<Ignore>();
+    let progressStartStream = new Subject<true>();
+    let progressEndStream = new Subject<false>();
     let stopStream = new Subject<Ignore>();
     when(dependency.progressStartStream).thenReturn(progressStartStream);
     when(dependency.progressEndStream).thenReturn(progressEndStream);
@@ -54,8 +54,8 @@ describe('Progress sync should work correctly', () => {
 
     /// When
     stopStream.next(IGNORE);
-    Numbers.range(0, 1000).forEach(() => progressStartStream.next(IGNORE));
-    Numbers.range(0, 1000).forEach(() => progressEndStream.next(IGNORE));
+    Numbers.range(0, 1000).forEach(() => progressStartStream.next(true));
+    Numbers.range(0, 1000).forEach(() => progressEndStream.next(false));
 
     /// Then
     verify(progressReceiver.next(anything())).never();
