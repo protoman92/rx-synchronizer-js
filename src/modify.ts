@@ -2,8 +2,10 @@ import { Nullable, Try } from 'javascriptutilities';
 import { catchJustReturn, flatMapIterable, mapNonNilOrEmpty } from 'rx-utilities-js';
 import { asapScheduler, merge, MonoTypeOperatorFunction, NextObserver, Observable, of, SchedulerLike, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, observeOn, share, switchMap, takeUntil } from 'rxjs/operators';
+import { Depn as ProgressDepn, Type as ProgressSync } from './progress';
+type IncludedKeys = 'progressReceiver' | 'stopStream';
 
-export interface BaseDepn {
+export interface BaseDepn extends Pick<ProgressDepn, IncludedKeys> {
   /**
    * If this is true, duplicate params will be filtered out with an operator.
    */
@@ -11,8 +13,6 @@ export interface BaseDepn {
 
   readonly description: string;
   readonly errorReceiver: NextObserver<Nullable<Error>>;
-  readonly progressReceiver: NextObserver<boolean>;
-  readonly stopStream: Observable<any>;
   readonly resultReceiptScheduler?: SchedulerLike;
 }
 
@@ -31,9 +31,11 @@ export interface Type {
 }
 
 export class Impl implements Type {
-  private subscription: Subscription;
+  private readonly progressSync: ProgressSync;
+  private readonly subscription: Subscription;
 
-  public constructor() {
+  public constructor(progressSync: ProgressSync) {
+    this.progressSync = progressSync;
     this.subscription = new Subscription();
   }
 
@@ -104,13 +106,16 @@ export class Impl implements Type {
 
     let modifyCompletedStream = modifyStream.pipe(switchMap(v => v), share());
 
-    subscription.add(merge(
-      validateStartedStream.pipe(map(() => true)),
-      argumentFailStream.pipe(map(() => false)),
-      validateFailStream.pipe(map(() => false)),
-      modifyCompletedStream.pipe(map(() => false)),
-    ).pipe(takeUntil(dependency.stopStream)
-    ).subscribe(dependency.progressReceiver));
+    this.progressSync.synchronize({
+      progressReceiver: dependency.progressReceiver,
+      progressStartStream: validateStartedStream.pipe(map((): true => true)),
+      progressEndStream: merge(
+        argumentFailStream,
+        validateFailStream,
+        modifyCompletedStream,
+      ).pipe(map((): false => false)),
+      stopStream: dependency.stopStream,
+    });
 
     subscription.add(modifyCompletedStream
       .pipe(mapNonNilOrEmpty(v => v.value), takeUntil(dependency.stopStream))
