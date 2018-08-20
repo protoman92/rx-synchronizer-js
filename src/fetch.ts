@@ -1,9 +1,11 @@
 import { Nullable, Try } from 'javascriptutilities';
 import { catchJustReturn, mapNonNilOrEmpty } from 'rx-utilities-js';
-import { asapScheduler, merge, MonoTypeOperatorFunction, NextObserver, Observable, of, OperatorFunction, SchedulerLike, Subscription } from 'rxjs';
+import { asyncScheduler, MonoTypeOperatorFunction, NextObserver, Observable, of, OperatorFunction, SchedulerLike, Subscription } from 'rxjs';
 import { distinctUntilChanged, map, observeOn, share, switchMap, takeUntil } from 'rxjs/operators';
+import { Depn as ProgressDepn, Type as ProgressSync } from './progress';
+type IncludedKeys = 'progressReceiver' | 'stopStream';
 
-export interface BaseDepn {
+export interface BaseDepn extends Pick<ProgressDepn, IncludedKeys> {
   /**
    * If this is true, duplicate params will be filtered out with an operator.
    * Beware that in the case of multiple triggers, the behavior of the stream
@@ -18,8 +20,6 @@ export interface BaseDepn {
 
   readonly description: string;
   readonly errorReceiver: NextObserver<Nullable<Error>>;
-  readonly progressReceiver: NextObserver<boolean>;
-  readonly stopStream: Observable<any>;
   readonly resultReceiptScheduler?: SchedulerLike;
 }
 
@@ -37,9 +37,11 @@ export interface Type {
 }
 
 export class Impl implements Type {
-  private subscription: Subscription;
+  private readonly progressSync: ProgressSync;
+  private readonly subscription: Subscription;
 
-  public constructor() {
+  public constructor(progressSync: ProgressSync) {
+    this.progressSync = progressSync;
     this.subscription = new Subscription();
   }
 
@@ -70,7 +72,13 @@ export class Impl implements Type {
           return of(Try.failure(e));
         }
       }),
-      observeOn(dependency.resultReceiptScheduler || asapScheduler),
+      ((): MonoTypeOperatorFunction<Observable<Try<Result>>> => {
+        if (dependency.resultReceiptScheduler) {
+          return observeOn(dependency.resultReceiptScheduler);
+        } else {
+          return observeOn(asyncScheduler);
+        }
+      })(),
       share(),
     );
 
@@ -92,10 +100,11 @@ export class Impl implements Type {
       .pipe(map(({ error }) => error), takeUntil(dependency.stopStream))
       .subscribe(dependency.errorReceiver));
 
-    subscription.add(merge(
-      fetchStream.pipe(map(() => true)),
-      fetchCompletedStream.pipe(map(() => false)),
-    ).pipe(takeUntil(dependency.stopStream)
-    ).subscribe(dependency.progressReceiver));
+    this.progressSync.synchronize({
+      progressReceiver: dependency.progressReceiver,
+      progressStartStream: fetchStream.pipe(map((): true => true)),
+      progressEndStream: fetchCompletedStream.pipe(map((): false => false)),
+      stopStream: dependency.stopStream,
+    });
   }
 }

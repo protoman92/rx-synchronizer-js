@@ -1,10 +1,12 @@
 import { Depn as FetchDepn, Impl as FetchSync } from 'fetch';
 import { IGNORE, Ignore, Nullable, Numbers, Try } from 'javascriptutilities';
+import { Type as ProgressSync } from 'progress';
 import { NEVER, NextObserver, of, queueScheduler, Subject, throwError } from 'rxjs';
-import { anyOfClass, anything, instance, spy, verify, when } from 'ts-mockito-2';
+import { anyOfClass, anything, instance, spy, verify, when, capture } from 'ts-mockito-2';
 
 describe('Fetch sync should work correctly', () => {
   let dependency: FetchDepn<number, number>;
+  let progressSync: ProgressSync;
   let synchronizer: FetchSync;
   let errorReceiver: NextObserver<Nullable<Error>>;
   let progressReceiver: NextObserver<boolean>;
@@ -28,7 +30,8 @@ describe('Fetch sync should work correctly', () => {
       stopStream: NEVER,
     });
 
-    synchronizer = new FetchSync();
+    progressSync = spy({ synchronize: () => { } });
+    synchronizer = new FetchSync(instance(progressSync));
   });
 
   it('Fetching result fails - should notify error', () => {
@@ -37,8 +40,10 @@ describe('Fetch sync should work correctly', () => {
     when(dependency.paramStream).thenReturn(paramStream);
     when(dependency.fetchWithParam(0)).thenReturn(of(0));
     when(dependency.fetchWithParam(1)).thenReturn(throwError(new Error('')));
-
     synchronizer.synchronize(instance(dependency));
+    let progressDepn = capture(progressSync.synchronize).first()[0];
+    progressDepn.progressStartStream.subscribe({ ...instance(progressReceiver) });
+    progressDepn.progressEndStream.subscribe({ ...instance(progressReceiver) });
 
     /// When
     paramStream.next(Try.success(0));
@@ -49,6 +54,8 @@ describe('Fetch sync should work correctly', () => {
     verify(errorReceiver.next(undefined)).once();
     verify(errorReceiver.next(anyOfClass(Error))).twice();
     verify(resultReceiver.next(anything())).once();
+    verify(progressReceiver.next(true)).times(3);
+    verify(progressReceiver.next(false)).times(3);
   });
 
   it('Fetching result succeeds - should notify results receiver', () => {
@@ -58,12 +65,17 @@ describe('Fetch sync should work correctly', () => {
     when(dependency.paramStream).thenReturn(paramStream);
     when(dependency.fetchWithParam(anything())).thenReturn(of(results));
     synchronizer.synchronize(instance(dependency));
+    let progressDepn = capture(progressSync.synchronize).first()[0];
+    progressDepn.progressStartStream.subscribe({ ...instance(progressReceiver) });
+    progressDepn.progressEndStream.subscribe({ ...instance(progressReceiver) });
 
     /// When
     paramStream.next(Try.success(0));
 
     /// Then
     verify(resultReceiver.next(results)).once();
+    verify(progressReceiver.next(true)).once();
+    verify(progressReceiver.next(false)).once();
   });
 
   it('Fetching responses with duplicate params - should notify receiver once', () => {
@@ -73,27 +85,38 @@ describe('Fetch sync should work correctly', () => {
     when(dependency.paramStream).thenReturn(paramStream);
     when(dependency.fetchWithParam(anything())).thenReturn(of(0));
     synchronizer.synchronize(instance(dependency));
+    let progressDepn = capture(progressSync.synchronize).first()[0];
+    progressDepn.progressStartStream.subscribe({ ...instance(progressReceiver) });
+    progressDepn.progressEndStream.subscribe({ ...instance(progressReceiver) });
 
     /// When
     Numbers.range(0, 1000).forEach(() => paramStream.next(Try.success(0)));
 
     /// Then
     verify(resultReceiver.next(anything())).once();
+    verify(progressReceiver.next(true)).once();
+    verify(progressReceiver.next(false)).once();
   });
 
   it('Allowing duplicate params - should not filter out duplicate params', () => {
     /// Setup
+    let times = 1000;
     let paramStream = new Subject<Try<number>>();
     when(dependency.allowDuplicateParams).thenReturn(true);
     when(dependency.paramStream).thenReturn(paramStream);
     when(dependency.fetchWithParam(anything())).thenReturn(of(0));
     synchronizer.synchronize(instance(dependency));
+    let progressDepn = capture(progressSync.synchronize).first()[0];
+    progressDepn.progressStartStream.subscribe({ ...instance(progressReceiver) });
+    progressDepn.progressEndStream.subscribe({ ...instance(progressReceiver) });
 
     /// When
-    Numbers.range(0, 1000).forEach(() => paramStream.next(Try.success(0)));
+    Numbers.range(0, times).forEach(() => paramStream.next(Try.success(0)));
 
     /// Then
-    verify(resultReceiver.next(anything())).times(1000);
+    verify(resultReceiver.next(anything())).times(times);
+    verify(progressReceiver.next(true)).times(times);
+    verify(progressReceiver.next(false)).times(times);
   });
 
   it('Allowing invalid result - should not filter out invalid results', () => {
@@ -105,6 +128,9 @@ describe('Fetch sync should work correctly', () => {
     when(dependency.paramStream).thenReturn(paramStream);
     when(dependency.fetchWithParam(anything())).thenReturn(throwError(new Error('')));
     synchronizer.synchronize(instance(dependency));
+    let progressDepn = capture(progressSync.synchronize).first()[0];
+    progressDepn.progressStartStream.subscribe({ ...instance(progressReceiver) });
+    progressDepn.progressEndStream.subscribe({ ...instance(progressReceiver) });
 
     /// When
     Numbers.range(0, times).forEach(() => paramStream.next(Try.success(0)));
@@ -112,6 +138,8 @@ describe('Fetch sync should work correctly', () => {
     /// Then
     verify(resultReceiver.next(anything())).times(times);
     verify(errorReceiver.next(anything())).times(times);
+    verify(progressReceiver.next(true)).times(times);
+    verify(progressReceiver.next(false)).times(times);
   });
 
   it('Sending stop signal - should unsubscribe all streams', () => {
