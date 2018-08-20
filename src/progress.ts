@@ -1,6 +1,7 @@
 import { Ignore } from 'javascriptutilities';
 import { merge, NextObserver, Observable, Subscription } from 'rxjs';
 import { delay, takeUntil } from 'rxjs/operators';
+type MergeDepn = Pick<Depn, 'progressStartStream' | 'progressEndStream'>;
 
 export interface Depn {
   readonly progressReceiver: NextObserver<boolean>;
@@ -20,11 +21,16 @@ export class Impl implements Type {
     this.subscription = new Subscription();
   }
 
-  public synchronize(dependency: Depn) {
-    this.subscription.add(merge(
+  public mergeProgressStreams(dependency: MergeDepn) {
+    return merge(
       dependency.progressStartStream,
       dependency.progressEndStream.pipe(delay(0)),
-    ).pipe(takeUntil(dependency.stopStream)
-    ).subscribe(dependency.progressReceiver));
+    );
+  }
+
+  public synchronize(dependency: Depn) {
+    this.subscription.add(this.mergeProgressStreams(dependency)
+      .pipe(takeUntil(dependency.stopStream))
+      .subscribe(dependency.progressReceiver));
   }
 }
