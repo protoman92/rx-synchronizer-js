@@ -1,4 +1,4 @@
-import { Collections, Nullable, Omit, Try } from 'javascriptutilities';
+import { Collections, Never, Omit, Try } from 'javascriptutilities';
 import { mapNonNilOrEmpty } from 'rx-utilities-js';
 import { combineLatest, NextObserver, Observable, OperatorFunction } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
@@ -20,7 +20,7 @@ export interface Depn<T> extends Omit<TriggerDepn<number>, ExcludedKeys> {
 
   readonly allObjectStream: Observable<Try<Partial<T>[]>>;
   readonly objectPropStream: Observable<Try<any>>;
-  readonly objectIndexReceiver: NextObserver<Nullable<number>>;
+  readonly objectIndexReceiver: NextObserver<Never<number>>;
 }
 
 export interface Type {
@@ -47,7 +47,7 @@ export class Impl implements Type {
       keys = [dependency.objectPropKeys];
     }
 
-    this.triggerSync.synchronize<Nullable<number>>({
+    this.triggerSync.synchronize<Never<number>>({
       ...dependency as Omit<Depn<T>,
       'allObjectStream' |
       'allowInvalidResult' |
@@ -76,7 +76,7 @@ export class Impl implements Type {
           });
         }).flatMap(v => v),
       ).pipe(
-        ((): OperatorFunction<Try<number>, Nullable<number>> => {
+        ((): OperatorFunction<Try<number>, Never<number>> => {
           if (dependency.allowInvalidResult) {
             return map(v => v.value);
           } else {

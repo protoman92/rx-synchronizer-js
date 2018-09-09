@@ -1,4 +1,4 @@
-import { Ignore, Indeterminate, Nullable, Try } from 'javascriptutilities';
+import { Ignore, Undefined, Never, Try } from 'javascriptutilities';
 import { NextObserver, Observable, of, Subscription } from 'rxjs';
 import { distinctUntilChanged, flatMap, takeUntil } from 'rxjs/operators';
 let deepEqual = require('deep-equal');
@@ -6,8 +6,8 @@ let deepEqual = require('deep-equal');
 export interface Depn<T> {
   readonly objectStream: Observable<Try<T>>;
   readonly stopStream: Observable<Ignore>;
-  readonly errorReceiver: NextObserver<Nullable<Error>>;
-  validateObject(object: Nullable<T>): void;
+  readonly errorReceiver: NextObserver<Never<Error>>;
+  validateObject(object: Never<T>): void;
 }
 
 /**
@@ -25,19 +25,30 @@ export class Impl implements Type {
   }
 
   public synchronize<T>(dependency: Depn<T>) {
-    this.subscription.add(dependency.objectStream.pipe(
-      distinctUntilChanged((v1, v2) => deepEqual(v1.value, v2.value)),
-      flatMap(({ value }): Observable<Indeterminate<Error>> => {
-        try {
-          dependency.validateObject(value);
-          return of(undefined);
-        } catch (e) {
-          return of(e);
-        }
-      }),
-      distinctUntilChanged((e1, e2) => (e1 === undefined && e2 === undefined) ||
-        (e1 !== undefined && e2 !== undefined && e1.message === e2.message)),
-      takeUntil(dependency.stopStream),
-    ).subscribe(dependency.errorReceiver));
+    this.subscription.add(
+      dependency.objectStream
+        .pipe(
+          distinctUntilChanged((v1, v2) => deepEqual(v1.value, v2.value)),
+          flatMap(
+            ({ value }): Observable<Undefined<Error>> => {
+              try {
+                dependency.validateObject(value);
+                return of(undefined);
+              } catch (e) {
+                return of(e);
+              }
+            }
+          ),
+          distinctUntilChanged(
+            (e1, e2) =>
+              (e1 === undefined && e2 === undefined) ||
+              (e1 !== undefined &&
+                e2 !== undefined &&
+                e1.message === e2.message)
+          ),
+          takeUntil(dependency.stopStream)
+        )
+        .subscribe(dependency.errorReceiver)
+    );
   }
 }

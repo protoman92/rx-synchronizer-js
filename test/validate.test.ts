@@ -1,4 +1,4 @@
-import { IGNORE, Ignore, Nullable, Numbers, Try } from 'javascriptutilities';
+import { IGNORE, Ignore, Never, Numbers, Try } from 'javascriptutilities';
 import { NEVER, NextObserver, Subject } from 'rxjs';
 import { anything, capture, instance, spy, verify, when } from 'ts-mockito-2';
 import { Depn as ValidateDepn, Impl as ValidateSync } from 'validate';
@@ -6,7 +6,7 @@ import { Depn as ValidateDepn, Impl as ValidateSync } from 'validate';
 describe('Validate sync should work correctly', () => {
   let dependency: ValidateDepn<number>;
   let synchronizer: ValidateSync;
-  let errorReceiver: NextObserver<Nullable<Error>>;
+  let errorReceiver: NextObserver<Never<Error>>;
 
   beforeEach(() => {
     errorReceiver = spy({ next: () => { } });

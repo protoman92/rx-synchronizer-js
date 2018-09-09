@@ -1,4 +1,4 @@
-import { Nullable, Try } from 'javascriptutilities';
+import { Never, Try } from 'javascriptutilities';
 import { catchJustReturn, mapNonNilOrEmpty } from 'rx-utilities-js';
 import { asyncScheduler, MonoTypeOperatorFunction, NextObserver, Observable, of, OperatorFunction, SchedulerLike, Subscription } from 'rxjs';
 import { distinctUntilChanged, map, observeOn, share, switchMap, takeUntil } from 'rxjs/operators';
@@ -19,13 +19,13 @@ export interface BaseDepn extends Pick<ProgressDepn, IncludedKeys> {
   readonly allowInvalidResult: boolean;
 
   readonly description: string;
-  readonly errorReceiver: NextObserver<Nullable<Error>>;
+  readonly errorReceiver: NextObserver<Never<Error>>;
   readonly resultReceiptScheduler?: SchedulerLike;
 }
 
 export interface Depn<Param, Result> extends BaseDepn {
   readonly paramStream: Observable<Try<Param>>;
-  readonly resultReceiver: NextObserver<Nullable<Result>>;
+  readonly resultReceiver: NextObserver<Never<Result>>;
   fetchWithParam(params: Param): Observable<Result>;
 }
 
@@ -86,7 +86,7 @@ export class Impl implements Type {
 
     subscription.add(fetchCompletedStream
       .pipe(
-        ((): OperatorFunction<Try<Result>, Nullable<Result>> => {
+        ((): OperatorFunction<Try<Result>, Never<Result>> => {
           if (dependency.allowInvalidResult) {
             return v => v.pipe(map(({ value }) => value));
           } else {

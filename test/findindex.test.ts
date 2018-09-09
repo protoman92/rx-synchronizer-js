@@ -1,5 +1,5 @@
 import { Depn as FindIndexDepn, Impl as FindIndexSync } from 'findindex';
-import { Nullable, Try } from 'javascriptutilities';
+import { Never, Try } from 'javascriptutilities';
 import { NEVER, NextObserver, Subject } from 'rxjs';
 import { Depn as TriggerDepn, Impl as TriggerSync } from 'trigger';
 import { anything, capture, instance, mock, spy, verify, when } from 'ts-mockito-2';
@@ -9,7 +9,7 @@ describe('Find index synchronizer should work correctly', () => {
   let triggerSync: TriggerSync;
   let findIndexSync: FindIndexSync;
   let dependency: FindIndexDepn<Indexed>;
-  let indexReceiver: NextObserver<Nullable<number>>;
+  let indexReceiver: NextObserver<Never<number>>;
 
   beforeEach(() => {
     indexReceiver = spy({ next: () => { } });
@@ -35,7 +35,7 @@ describe('Find index synchronizer should work correctly', () => {
     when(dependency.allObjectStream).thenReturn(objectStream);
     when(dependency.objectPropStream).thenReturn(objectPropStream);
     findIndexSync.synchronize(instance(dependency));
-    let mappedDepn = capture(triggerSync.synchronize).first()[0] as TriggerDepn<Nullable<number>>;
+    let mappedDepn = capture(triggerSync.synchronize).first()[0] as TriggerDepn<Never<number>>;
     mappedDepn.triggerStream.subscribe({ ...instance(indexReceiver) });
 
     /// When
@@ -62,7 +62,7 @@ describe('Find index synchronizer should work correctly', () => {
     when(dependency.allObjectStream).thenReturn(objectStream);
     when(dependency.objectPropStream).thenReturn(objectPropStream);
     findIndexSync.synchronize(instance(dependency));
-    let mappedDepn = capture(triggerSync.synchronize).first()[0] as TriggerDepn<Nullable<number>>;
+    let mappedDepn = capture(triggerSync.synchronize).first()[0] as TriggerDepn<Never<number>>;
     mappedDepn.triggerStream.subscribe({ ...instance(indexReceiver) });
 
     /// When
@@ -90,7 +90,7 @@ describe('Find index synchronizer should work correctly', () => {
     when(dependency.objectPropStream).thenReturn(objectPropStream);
     when(dependency.objectPropKeys).thenReturn('id');
     findIndexSync.synchronize(instance(dependency));
-    let mappedDepn = capture(triggerSync.synchronize).first()[0] as TriggerDepn<Nullable<number>>;
+    let mappedDepn = capture(triggerSync.synchronize).first()[0] as TriggerDepn<Never<number>>;
     mappedDepn.triggerStream.subscribe({ ...instance(indexReceiver) });
 
     /// When

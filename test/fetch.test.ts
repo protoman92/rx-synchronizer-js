@@ -1,5 +1,5 @@
 import { Depn as FetchDepn, Impl as FetchSync } from 'fetch';
-import { IGNORE, Ignore, Nullable, Numbers, Try } from 'javascriptutilities';
+import { IGNORE, Ignore, Never, Numbers, Try } from 'javascriptutilities';
 import { Type as ProgressSync } from 'progress';
 import { NEVER, NextObserver, of, queueScheduler, Subject, throwError } from 'rxjs';
 import { anyOfClass, anything, instance, spy, verify, when, capture } from 'ts-mockito-2';
@@ -8,9 +8,9 @@ describe('Fetch sync should work correctly', () => {
   let dependency: FetchDepn<number, number>;
   let progressSync: ProgressSync;
   let synchronizer: FetchSync;
-  let errorReceiver: NextObserver<Nullable<Error>>;
+  let errorReceiver: NextObserver<Never<Error>>;
   let progressReceiver: NextObserver<boolean>;
-  let resultReceiver: NextObserver<Nullable<number>>;
+  let resultReceiver: NextObserver<Never<number>>;
 
   beforeEach(() => {
     errorReceiver = spy({ next: () => { } });

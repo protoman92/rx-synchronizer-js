@@ -1,4 +1,4 @@
-import { Nullable, Try } from 'javascriptutilities';
+import { Never, Try } from 'javascriptutilities';
 import { catchJustReturn, flatMapIterable, mapNonNilOrEmpty } from 'rx-utilities-js';
 import { asapScheduler, merge, MonoTypeOperatorFunction, NextObserver, Observable, of, SchedulerLike, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, observeOn, share, switchMap, takeUntil } from 'rxjs/operators';
@@ -12,13 +12,13 @@ export interface BaseDepn extends Pick<ProgressDepn, IncludedKeys> {
   readonly allowDuplicateParams: boolean;
 
   readonly description: string;
-  readonly errorReceiver: NextObserver<Nullable<Error>>;
+  readonly errorReceiver: NextObserver<Never<Error>>;
   readonly resultReceiptScheduler?: SchedulerLike;
 }
 
 export interface Depn<Param, Result> extends BaseDepn {
   readonly paramStream: Observable<Try<Param>>;
-  readonly resultReceiver: NextObserver<Nullable<Result>>;
+  readonly resultReceiver: NextObserver<Never<Result>>;
   validateParam(param: Param): Error[] | Observable<Error[]>;
   modifyWithParam(params: Param): Observable<Result>;
 }
