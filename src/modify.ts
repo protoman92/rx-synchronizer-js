@@ -1,8 +1,29 @@
-import { Never, Try } from 'javascriptutilities';
-import { catchJustReturn, flatMapIterable, mapNonNilOrEmpty } from 'rx-utilities-js';
-import { asapScheduler, merge, MonoTypeOperatorFunction, NextObserver, Observable, of, SchedulerLike, Subscription } from 'rxjs';
-import { distinctUntilChanged, filter, map, observeOn, share, switchMap, takeUntil } from 'rxjs/operators';
-import { Depn as ProgressDepn, Type as ProgressSync } from './progress';
+import {Never, Try} from 'javascriptutilities';
+import {
+  catchJustReturn,
+  flatMapIterable,
+  mapNonNilOrEmpty,
+} from 'rx-utilities-js';
+import {
+  asapScheduler,
+  merge,
+  MonoTypeOperatorFunction,
+  NextObserver,
+  Observable,
+  of,
+  SchedulerLike,
+  Subscription,
+} from 'rxjs';
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  observeOn,
+  share,
+  switchMap,
+  takeUntil,
+} from 'rxjs/operators';
+import {Depn as ProgressDepn, Type as ProgressSync} from './progress';
 type IncludedKeys = 'progressReceiver' | 'stopStream';
 
 export interface BaseDepn extends Pick<ProgressDepn, IncludedKeys> {
@@ -49,22 +70,31 @@ export class Impl implements Type {
         } else {
           let deepEqual = require('deep-equal');
 
-          return v => v.pipe(distinctUntilChanged((v1, v2) => {
-            return deepEqual(v1.value, v2.value);
-          }));
+          return v =>
+            v.pipe(
+              distinctUntilChanged((v1, v2) => {
+                return deepEqual(v1.value, v2.value);
+              })
+            );
         }
       })(),
-      map(v => v.map(((v1): Observable<[Param, Error[]]> => {
-        let validated = dependency.validateParam(v1);
+      map(v =>
+        v.map(
+          (v1): Observable<[Param, Error[]]> => {
+            let validated = dependency.validateParam(v1);
 
-        if (validated instanceof Observable) {
-          return validated.pipe(map((errors): [Param, Error[]] => [v1, errors]));
-        } else {
-          return of([v1, validated] as [Param, Error[]]);
-        }
-      }))),
+            if (validated instanceof Observable) {
+              return validated.pipe(
+                map((errors): [Param, Error[]] => [v1, errors])
+              );
+            } else {
+              return of([v1, validated] as [Param, Error[]]);
+            }
+          }
+        )
+      ),
       observeOn(dependency.resultReceiptScheduler || asapScheduler),
-      share(),
+      share()
     );
 
     let validateCompletedStream = validateStartedStream.pipe(
@@ -72,39 +102,44 @@ export class Impl implements Type {
         try {
           return v.getOrThrow().pipe(
             map(v1 => Try.success(v1)),
-            catchJustReturn(e => Try.failure(e)),
+            catchJustReturn(e => Try.failure(e))
           );
         } catch (e) {
           return of(Try.failure<[Param, Error[]]>(e));
         }
       }),
-      share(),
+      share()
     );
 
     let argumentFailStream = validateCompletedStream.pipe(
       mapNonNilOrEmpty(v => v.error),
-      share(),
+      share()
     );
 
     let validateFailStream = validateCompletedStream.pipe(
-      mapNonNilOrEmpty(({ value }) => value),
+      mapNonNilOrEmpty(({value}) => value),
       filter(v => v[1].length > 0),
       map((v): Error[] => v[1]),
-      share(),
+      share()
     );
 
     let modifyStream = validateCompletedStream.pipe(
       mapNonNilOrEmpty(v => v.value),
       filter(v => v[1].length === 0),
       map(v => v[0]),
-      map(v => dependency.modifyWithParam(v).pipe(
-        map(v2 => Try.success(v2)),
-        catchJustReturn(e => Try.failure(e))),
+      map(v =>
+        dependency.modifyWithParam(v).pipe(
+          map(v2 => Try.success(v2)),
+          catchJustReturn(e => Try.failure(e))
+        )
       ),
-      share(),
+      share()
     );
 
-    let modifyCompletedStream = modifyStream.pipe(switchMap(v => v), share());
+    let modifyCompletedStream = modifyStream.pipe(
+      switchMap(v => v),
+      share()
+    );
 
     this.progressSync.synchronize({
       progressReceiver: dependency.progressReceiver,
@@ -112,20 +147,28 @@ export class Impl implements Type {
       progressEndStream: merge(
         argumentFailStream,
         validateFailStream,
-        modifyCompletedStream,
+        modifyCompletedStream
       ).pipe(map((): false => false)),
       stopStream: dependency.stopStream,
     });
 
-    subscription.add(modifyCompletedStream
-      .pipe(mapNonNilOrEmpty(v => v.value), takeUntil(dependency.stopStream))
-      .subscribe(dependency.resultReceiver));
+    subscription.add(
+      modifyCompletedStream
+        .pipe(
+          mapNonNilOrEmpty(v => v.value),
+          takeUntil(dependency.stopStream)
+        )
+        .subscribe(dependency.resultReceiver)
+    );
 
-    subscription.add(merge(
-      argumentFailStream,
-      validateFailStream.pipe(flatMapIterable(v => v)),
-      modifyCompletedStream.pipe(mapNonNilOrEmpty(v => v.error)),
-    ).pipe(takeUntil(dependency.stopStream)
-    ).subscribe(dependency.errorReceiver));
+    subscription.add(
+      merge(
+        argumentFailStream,
+        validateFailStream.pipe(flatMapIterable(v => v)),
+        modifyCompletedStream.pipe(mapNonNilOrEmpty(v => v.error))
+      )
+        .pipe(takeUntil(dependency.stopStream))
+        .subscribe(dependency.errorReceiver)
+    );
   }
 }

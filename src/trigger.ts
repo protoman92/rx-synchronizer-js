@@ -1,6 +1,6 @@
-import { Ignore } from 'javascriptutilities';
-import { NextObserver, Observable, Subscription } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import {Ignore} from 'javascriptutilities';
+import {NextObserver, Observable, Subscription} from 'rxjs';
+import {takeUntil} from 'rxjs/operators';
 
 export interface Depn<Param = Ignore> {
   readonly triggerStream: Observable<Param>;
@@ -25,8 +25,10 @@ export class Impl implements Type {
   public synchronize<Param = Ignore>(dependency: Depn<Param>) {
     let subscription = this.subscription;
 
-    subscription.add(dependency.triggerStream
-      .pipe(takeUntil(dependency.stopStream))
-      .subscribe(dependency.triggerReceiver));
+    subscription.add(
+      dependency.triggerStream
+        .pipe(takeUntil(dependency.stopStream))
+        .subscribe(dependency.triggerReceiver)
+    );
   }
 }

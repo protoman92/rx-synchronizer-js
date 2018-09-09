@@ -1,8 +1,24 @@
-import { Never, Try } from 'javascriptutilities';
-import { catchJustReturn, mapNonNilOrEmpty } from 'rx-utilities-js';
-import { asyncScheduler, MonoTypeOperatorFunction, NextObserver, Observable, of, OperatorFunction, SchedulerLike, Subscription } from 'rxjs';
-import { distinctUntilChanged, map, observeOn, share, switchMap, takeUntil } from 'rxjs/operators';
-import { Depn as ProgressDepn, Type as ProgressSync } from './progress';
+import {Never, Try} from 'javascriptutilities';
+import {catchJustReturn, mapNonNilOrEmpty} from 'rx-utilities-js';
+import {
+  asyncScheduler,
+  MonoTypeOperatorFunction,
+  NextObserver,
+  Observable,
+  of,
+  OperatorFunction,
+  SchedulerLike,
+  Subscription,
+} from 'rxjs';
+import {
+  distinctUntilChanged,
+  map,
+  observeOn,
+  share,
+  switchMap,
+  takeUntil,
+} from 'rxjs/operators';
+import {Depn as ProgressDepn, Type as ProgressSync} from './progress';
 type IncludedKeys = 'progressReceiver' | 'stopStream';
 
 export interface BaseDepn extends Pick<ProgressDepn, IncludedKeys> {
@@ -55,9 +71,12 @@ export class Impl implements Type {
         } else {
           let deepEqual = require('deep-equal');
 
-          return v => v.pipe(distinctUntilChanged((v1, v2) => {
-            return deepEqual(v1.value, v2.value);
-          }));
+          return v =>
+            v.pipe(
+              distinctUntilChanged((v1, v2) => {
+                return deepEqual(v1.value, v2.value);
+              })
+            );
         }
       })(),
       map(param => {
@@ -66,7 +85,7 @@ export class Impl implements Type {
 
           return dependency.fetchWithParam(actualParam).pipe(
             map(v1 => Try.success(v1)),
-            catchJustReturn(e => Try.failure(e)),
+            catchJustReturn(e => Try.failure(e))
           );
         } catch (e) {
           return of(Try.failure(e));
@@ -79,26 +98,37 @@ export class Impl implements Type {
           return observeOn(asyncScheduler);
         }
       })(),
-      share(),
+      share()
     );
 
-    let fetchCompletedStream = fetchStream.pipe(switchMap(v => v), share());
+    let fetchCompletedStream = fetchStream.pipe(
+      switchMap(v => v),
+      share()
+    );
 
-    subscription.add(fetchCompletedStream
-      .pipe(
-        ((): OperatorFunction<Try<Result>, Never<Result>> => {
-          if (dependency.allowInvalidResult) {
-            return v => v.pipe(map(({ value }) => value));
-          } else {
-            return v => v.pipe(mapNonNilOrEmpty(({ value }) => value));
-          }
-        })(),
-        takeUntil(dependency.stopStream))
-      .subscribe(dependency.resultReceiver));
+    subscription.add(
+      fetchCompletedStream
+        .pipe(
+          ((): OperatorFunction<Try<Result>, Never<Result>> => {
+            if (dependency.allowInvalidResult) {
+              return v => v.pipe(map(({value}) => value));
+            } else {
+              return v => v.pipe(mapNonNilOrEmpty(({value}) => value));
+            }
+          })(),
+          takeUntil(dependency.stopStream)
+        )
+        .subscribe(dependency.resultReceiver)
+    );
 
-    subscription.add(fetchCompletedStream
-      .pipe(map(({ error }) => error), takeUntil(dependency.stopStream))
-      .subscribe(dependency.errorReceiver));
+    subscription.add(
+      fetchCompletedStream
+        .pipe(
+          map(({error}) => error),
+          takeUntil(dependency.stopStream)
+        )
+        .subscribe(dependency.errorReceiver)
+    );
 
     this.progressSync.synchronize({
       progressReceiver: dependency.progressReceiver,

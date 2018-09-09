@@ -1,7 +1,7 @@
-import { IGNORE, Ignore, Numbers, Try } from 'javascriptutilities';
-import { NEVER, NextObserver, Subject } from 'rxjs';
-import { Depn as TriggerDepn, Impl as TriggerSync } from 'trigger';
-import { anything, instance, spy, verify, when } from 'ts-mockito-2';
+import {IGNORE, Ignore, Numbers, Try} from 'javascriptutilities';
+import {NEVER, NextObserver, Subject} from 'rxjs';
+import {Depn as TriggerDepn, Impl as TriggerSync} from 'trigger';
+import {anything, instance, spy, verify, when} from 'ts-mockito-2';
 
 describe('Trigger sync should work correctly', () => {
   let dependency: TriggerDepn;
@@ -9,10 +9,10 @@ describe('Trigger sync should work correctly', () => {
   let triggerReceiver: NextObserver<Ignore>;
 
   beforeEach(() => {
-    triggerReceiver = spy({ next: () => { } });
+    triggerReceiver = spy({next: () => {}});
 
     dependency = spy({
-      triggerReceiver: { ...instance(triggerReceiver) },
+      triggerReceiver: {...instance(triggerReceiver)},
       triggerStream: NEVER,
       stopStream: NEVER,
     });
@@ -44,7 +44,7 @@ describe('Trigger sync should work correctly', () => {
     /// When
     triggerStream.next(IGNORE);
     stopStream.next(IGNORE);
-    Numbers.range(10, 1000).forEach((v => triggerStream.next(Try.success(v))));
+    Numbers.range(10, 1000).forEach(v => triggerStream.next(Try.success(v)));
 
     /// Then
     verify(triggerReceiver.next(anything())).once();

@@ -1,4 +1,5 @@
 # rx-synchronizer-js
+
 [![npm version](https://badge.fury.io/js/rx-synchronizer.svg)](https://badge.fury.io/js/rx-synchronizer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://travis-ci.org/protoman92/rx-synchronizer-js.svg?branch=master)](https://travis-ci.org/protoman92/rx-synchronizer-js)

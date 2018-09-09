@@ -3,14 +3,10 @@
     "member-access": false,
     "member-ordering": true,
     "no-any": false,
-    "no-inferrable-types": [
-      false
-    ],
+    "no-inferrable-types": [false],
     "no-internal-module": true,
     "no-var-requires": false,
-    "typedef": [
-      false
-    ],
+    "typedef": [false],
     "typedef-whitespace": [
       true,
       {
@@ -35,14 +31,7 @@
     "no-arg": true,
     "no-bitwise": true,
     "no-conditional-assignment": true,
-    "no-console": [
-      true,
-      "debug",
-      "info",
-      "time",
-      "timeEnd",
-      "trace"
-    ],
+    "no-console": [true, "debug", "info", "time", "timeEnd", "trace"],
     "no-construct": true,
     "no-debugger": true,
     "no-duplicate-variable": true,
@@ -57,19 +46,10 @@
     "no-var-keyword": true,
     "radix": true,
     "switch-default": true,
-    "triple-equals": [
-      true,
-      "allow-undefined-check"
-    ],
+    "triple-equals": [true, "allow-undefined-check"],
     "eofline": false,
-    "indent": [
-      true,
-      "spaces"
-    ],
-    "max-line-length": [
-      true,
-      150
-    ],
+    "indent": [true, "spaces"],
+    "max-line-length": [true, 150],
     "no-require-imports": false,
     "no-trailing-whitespace": true,
     "object-literal-sort-keys": false,
@@ -80,21 +60,12 @@
         "singleline": true
       }
     ],
-    "align": [
-      true
-    ],
+    "align": [true],
     "class-name": true,
-    "comment-format": [
-      true,
-      "check-space"
-    ],
-    "interface-name": [
-      false
-    ],
+    "comment-format": [true, "check-space"],
+    "interface-name": [false],
     "jsdoc-format": true,
-    "no-consecutive-blank-lines": [
-      true
-    ],
+    "no-consecutive-blank-lines": [true],
     "no-parameter-properties": false,
     "one-line": [
       true,
@@ -104,11 +75,7 @@
       "check-finally",
       "check-whitespace"
     ],
-    "quotemark": [
-      true,
-      "single",
-      "avoid-escape"
-    ],
+    "quotemark": [true, "single", "avoid-escape"],
     "semicolon": true,
     "variable-name": [
       true,

@@ -31,10 +31,7 @@
       "es2015.symbol.wellknown",
       "esnext.asynciterable"
     ],
-    "types": [
-      "node",
-      "jest"
-    ],
+    "types": ["node", "jest"],
     "baseUrl": "src",
     "paths": {}
   },

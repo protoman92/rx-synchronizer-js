@@ -1,25 +1,33 @@
-import { Depn as FindIndexDepn, Impl as FindIndexSync } from 'findindex';
-import { Never, Try } from 'javascriptutilities';
-import { NEVER, NextObserver, Subject } from 'rxjs';
-import { Depn as TriggerDepn, Impl as TriggerSync } from 'trigger';
-import { anything, capture, instance, mock, spy, verify, when } from 'ts-mockito-2';
+import {Depn as FindIndexDepn, Impl as FindIndexSync} from 'findindex';
+import {Never, Try} from 'javascriptutilities';
+import {NEVER, NextObserver, Subject} from 'rxjs';
+import {Depn as TriggerDepn, Impl as TriggerSync} from 'trigger';
+import {
+  anything,
+  capture,
+  instance,
+  mock,
+  spy,
+  verify,
+  when,
+} from 'ts-mockito-2';
 
 describe('Find index synchronizer should work correctly', () => {
-  type Indexed = { readonly id?: string; readonly name?: string; };
+  type Indexed = {readonly id?: string; readonly name?: string};
   let triggerSync: TriggerSync;
   let findIndexSync: FindIndexSync;
   let dependency: FindIndexDepn<Indexed>;
   let indexReceiver: NextObserver<Never<number>>;
 
   beforeEach(() => {
-    indexReceiver = spy({ next: () => { } });
+    indexReceiver = spy({next: () => {}});
 
     dependency = spy({
       allowInvalidResult: false,
       allObjectStream: NEVER,
       objectPropKeys: ['id', 'name'] as (keyof Indexed)[],
       objectPropStream: NEVER,
-      objectIndexReceiver: { ...instance(indexReceiver) },
+      objectIndexReceiver: {...instance(indexReceiver)},
       stopStream: NEVER,
     });
 
@@ -35,13 +43,15 @@ describe('Find index synchronizer should work correctly', () => {
     when(dependency.allObjectStream).thenReturn(objectStream);
     when(dependency.objectPropStream).thenReturn(objectPropStream);
     findIndexSync.synchronize(instance(dependency));
-    let mappedDepn = capture(triggerSync.synchronize).first()[0] as TriggerDepn<Never<number>>;
-    mappedDepn.triggerStream.subscribe({ ...instance(indexReceiver) });
+    let mappedDepn = capture(triggerSync.synchronize).first()[0] as TriggerDepn<
+      Never<number>
+    >;
+    mappedDepn.triggerStream.subscribe({...instance(indexReceiver)});
 
     /// When
     objectStream.next(Try.failure(''));
     objectPropStream.next(Try.failure(''));
-    objectStream.next(Try.success([{}, {}, { id: '1', name: '2' }]));
+    objectStream.next(Try.success([{}, {}, {id: '1', name: '2'}]));
     objectPropStream.next(Try.failure(''));
     objectPropStream.next(Try.success('1'));
     objectPropStream.next(Try.failure(''));
@@ -62,16 +72,18 @@ describe('Find index synchronizer should work correctly', () => {
     when(dependency.allObjectStream).thenReturn(objectStream);
     when(dependency.objectPropStream).thenReturn(objectPropStream);
     findIndexSync.synchronize(instance(dependency));
-    let mappedDepn = capture(triggerSync.synchronize).first()[0] as TriggerDepn<Never<number>>;
-    mappedDepn.triggerStream.subscribe({ ...instance(indexReceiver) });
+    let mappedDepn = capture(triggerSync.synchronize).first()[0] as TriggerDepn<
+      Never<number>
+    >;
+    mappedDepn.triggerStream.subscribe({...instance(indexReceiver)});
 
     /// When
     objectStream.next(Try.failure(''));
     objectPropStream.next(Try.failure(''));
-    objectStream.next(Try.success([{}, {}, { id: '1' }]));
+    objectStream.next(Try.success([{}, {}, {id: '1'}]));
     objectPropStream.next(Try.failure(''));
     objectPropStream.next(Try.success('1'));
-    objectStream.next(Try.success([{}, { id: '1', name: '2' }, {}]));
+    objectStream.next(Try.success([{}, {id: '1', name: '2'}, {}]));
     objectPropStream.next(Try.success('2'));
     objectStream.next(Try.success([{}, {}, {}]));
 
@@ -90,14 +102,16 @@ describe('Find index synchronizer should work correctly', () => {
     when(dependency.objectPropStream).thenReturn(objectPropStream);
     when(dependency.objectPropKeys).thenReturn('id');
     findIndexSync.synchronize(instance(dependency));
-    let mappedDepn = capture(triggerSync.synchronize).first()[0] as TriggerDepn<Never<number>>;
-    mappedDepn.triggerStream.subscribe({ ...instance(indexReceiver) });
+    let mappedDepn = capture(triggerSync.synchronize).first()[0] as TriggerDepn<
+      Never<number>
+    >;
+    mappedDepn.triggerStream.subscribe({...instance(indexReceiver)});
 
     /// When
-    objectStream.next(Try.success([{}, {}, { id: '1' }]));
+    objectStream.next(Try.success([{}, {}, {id: '1'}]));
     objectPropStream.next(Try.success('1'));
     objectPropStream.next(Try.success('2'));
-    objectStream.next(Try.success([{}, { id: '1', name: '2' }, {}]));
+    objectStream.next(Try.success([{}, {id: '1', name: '2'}, {}]));
 
     /// Then
     verify(indexReceiver.next(2)).once();
