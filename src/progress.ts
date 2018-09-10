@@ -1,18 +1,17 @@
 import {Ignore} from 'javascriptutilities';
 import {merge, NextObserver, Observable, Subscription} from 'rxjs';
 import {delay, takeUntil} from 'rxjs/operators';
-type MergeDepn = Pick<Depn, 'progressStartStream' | 'progressEndStream'>;
 
-export interface Depn {
-  readonly progressReceiver: NextObserver<boolean>;
-  readonly progressStartStream: Observable<true>;
-  readonly progressEndStream: Observable<false>;
-  readonly stopStream: Observable<Ignore>;
-}
+export type Depn = Readonly<{
+  progressReceiver: NextObserver<boolean>;
+  progressStartStream: Observable<true>;
+  progressEndStream: Observable<false>;
+  stopStream: Observable<Ignore>;
+}>;
 
-export interface Type {
-  synchronize(dependency: Depn): void;
-}
+export type Type = Readonly<{
+  synchronize: (dependency: Depn) => void;
+}>;
 
 export class Impl implements Type {
   private readonly subscription: Subscription;
@@ -21,7 +20,9 @@ export class Impl implements Type {
     this.subscription = new Subscription();
   }
 
-  public mergeProgressStreams(dependency: MergeDepn) {
+  public mergeProgressStreams(
+    dependency: Pick<Depn, 'progressStartStream' | 'progressEndStream'>
+  ) {
     return merge(
       dependency.progressStartStream,
       dependency.progressEndStream.pipe(delay(0))

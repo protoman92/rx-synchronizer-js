@@ -1,21 +1,21 @@
-import {Ignore, Undefined, Never, Try} from 'javascriptutilities';
+import {Ignore, Never, Try, Undefined} from 'javascriptutilities';
 import {NextObserver, Observable, of, Subscription} from 'rxjs';
 import {distinctUntilChanged, flatMap, takeUntil} from 'rxjs/operators';
 let deepEqual = require('deep-equal');
 
-export interface Depn<T> {
-  readonly objectStream: Observable<Try<T>>;
-  readonly stopStream: Observable<Ignore>;
-  readonly errorReceiver: NextObserver<Never<Error>>;
-  validateObject(object: Never<T>): void;
-}
+export type Depn<T> = Readonly<{
+  objectStream: Observable<Try<T>>;
+  stopStream: Observable<Ignore>;
+  errorReceiver: NextObserver<Never<Error>>;
+  validateObject: (object: Never<T>) => void;
+}>;
 
 /**
  * Synchronizer that performs validation on trigger.
  */
-export interface Type {
-  synchronize<T>(dependency: Depn<T>): void;
-}
+export type Type = Readonly<{
+  synchronize: <T>(dependency: Depn<T>) => void;
+}>;
 
 export class Impl implements Type {
   private readonly subscription: Subscription;

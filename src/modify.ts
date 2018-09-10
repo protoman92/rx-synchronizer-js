@@ -24,32 +24,33 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 import {Depn as ProgressDepn, Type as ProgressSync} from './progress';
-type IncludedKeys = 'progressReceiver' | 'stopStream';
 
-export interface BaseDepn extends Pick<ProgressDepn, IncludedKeys> {
-  /**
-   * If this is true, duplicate params will be filtered out with an operator.
-   */
-  readonly allowDuplicateParams: boolean;
+export type BaseDepn = Pick<ProgressDepn, 'progressReceiver' | 'stopStream'> &
+  Readonly<{
+    /**
+     * If this is true, duplicate params will be filtered out with an operator.
+     */
+    allowDuplicateParams: boolean;
 
-  readonly description: string;
-  readonly errorReceiver: NextObserver<Never<Error>>;
-  readonly resultReceiptScheduler?: SchedulerLike;
-}
+    description: string;
+    errorReceiver: NextObserver<Never<Error>>;
+    resultReceiptScheduler?: SchedulerLike;
+  }>;
 
-export interface Depn<Param, Result> extends BaseDepn {
-  readonly paramStream: Observable<Try<Param>>;
-  readonly resultReceiver: NextObserver<Never<Result>>;
-  validateParam(param: Param): Error[] | Observable<Error[]>;
-  modifyWithParam(params: Param): Observable<Result>;
-}
+export type Depn<Param, Result> = BaseDepn &
+  Readonly<{
+    paramStream: Observable<Try<Param>>;
+    resultReceiver: NextObserver<Never<Result>>;
+    validateParam: (param: Param) => Error[] | Observable<Error[]>;
+    modifyWithParam: (params: Param) => Observable<Result>;
+  }>;
 
 /**
  * Synchronizer that validates and modifies some data on trigger.
  */
-export interface Type {
-  synchronize<Param, Result>(dependency: Depn<Param, Result>): void;
-}
+export type Type = Readonly<{
+  synchronize: <Param, Result>(dependency: Depn<Param, Result>) => void;
+}>;
 
 export class Impl implements Type {
   private readonly progressSync: ProgressSync;

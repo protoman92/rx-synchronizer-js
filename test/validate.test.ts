@@ -11,7 +11,7 @@ describe('Validate sync should work correctly', () => {
   beforeEach(() => {
     errorReceiver = spy({next: () => {}});
 
-    dependency = spy({
+    dependency = spy<ValidateDepn<number>>({
       errorReceiver: {...instance(errorReceiver)},
       objectStream: NEVER,
       stopStream: NEVER,

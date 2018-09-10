@@ -11,7 +11,7 @@ describe('Trigger sync should work correctly', () => {
   beforeEach(() => {
     triggerReceiver = spy({next: () => {}});
 
-    dependency = spy({
+    dependency = spy<TriggerDepn>({
       triggerReceiver: {...instance(triggerReceiver)},
       triggerStream: NEVER,
       stopStream: NEVER,

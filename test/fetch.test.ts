@@ -32,7 +32,7 @@ describe('Fetch sync should work correctly', () => {
     progressReceiver = spy({next: () => {}});
     resultReceiver = spy({next: () => {}});
 
-    dependency = spy({
+    dependency = spy<FetchDepn<number, number>>({
       allowDuplicateParams: false,
       allowInvalidResult: false,
       description: '',

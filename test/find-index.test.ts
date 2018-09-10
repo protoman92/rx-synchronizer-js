@@ -1,4 +1,4 @@
-import {Depn as FindIndexDepn, Impl as FindIndexSync} from 'findindex';
+import {Depn as FindIndexDepn, Impl as FindIndexSync} from 'find-index';
 import {Never, Try} from 'javascriptutilities';
 import {NEVER, NextObserver, Subject} from 'rxjs';
 import {Depn as TriggerDepn, Impl as TriggerSync} from 'trigger';
@@ -22,7 +22,7 @@ describe('Find index synchronizer should work correctly', () => {
   beforeEach(() => {
     indexReceiver = spy({next: () => {}});
 
-    dependency = spy({
+    dependency = spy<FindIndexDepn<Indexed>>({
       allowInvalidResult: false,
       allObjectStream: NEVER,
       objectPropKeys: ['id', 'name'] as (keyof Indexed)[],

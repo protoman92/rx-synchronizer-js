@@ -23,7 +23,7 @@ describe('Progress sync should work correctly', () => {
   beforeEach(() => {
     progressReceiver = spy({next: () => {}});
 
-    dependency = spy({
+    dependency = spy<ProgressDepn>({
       progressReceiver: {...instance(progressReceiver)},
       progressStartStream: NEVER,
       progressEndStream: NEVER,

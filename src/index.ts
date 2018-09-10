@@ -1,5 +1,5 @@
 import * as FetchSync from './fetch';
-import * as FindIndexSync from './findindex';
+import * as FindIndexSync from './find-index';
 import * as ModifySync from './modify';
 import * as ProgressSync from './progress';
 import * as TriggerSync from './trigger';

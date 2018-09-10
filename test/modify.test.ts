@@ -24,7 +24,7 @@ describe('Modify sync should work correctly', () => {
     progressReceiver = spy({next: (_v: boolean) => {}});
     resultReceiver = spy({next: (_v: number) => {}});
 
-    dependency = spy({
+    dependency = spy<ModifyDepn<number, number>>({
       allowDuplicateParams: false,
       description: '',
       errorReceiver: {...instance(errorReceiver)},
