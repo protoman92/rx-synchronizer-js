@@ -13,9 +13,9 @@ import {
   zip,
 } from 'rxjs';
 import {anything, capture, instance, spy, verify, when} from 'ts-mockito-2';
+import {asyncWait, asyncTimeout} from './test-util';
 
 describe('Progress sync should work correctly', () => {
-  let timeout = 100;
   let dependency: ProgressDepn;
   let progressSync: ProgressSync;
   let progressReceiver: NextObserver<boolean>;
@@ -54,39 +54,50 @@ describe('Progress sync should work correctly', () => {
           progressReceiver.next(false)
         );
         done();
-      }, 1);
+      }, asyncWait);
     },
-    timeout
+    asyncTimeout
   );
 
-  it('Sending stop signal - should unsubscribe all streams', () => {
-    /// Setup
-    let progressStartStream = new Subject<true>();
-    let progressEndStream = new Subject<false>();
-    let stopStream = new Subject<Ignore>();
-    when(dependency.progressStartStream).thenReturn(progressStartStream);
-    when(dependency.progressEndStream).thenReturn(progressEndStream);
-    when(dependency.stopStream).thenReturn(stopStream);
-    progressSync.synchronize(instance(dependency));
+  it(
+    'Sending stop signal - should unsubscribe all streams',
+    done => {
+      /// Setup
+      let progressStartStream = new Subject<true>();
+      let progressEndStream = new Subject<false>();
+      let stopStream = new Subject<Ignore>();
+      when(dependency.progressStartStream).thenReturn(progressStartStream);
+      when(dependency.progressEndStream).thenReturn(progressEndStream);
+      when(dependency.stopStream).thenReturn(stopStream);
+      progressSync.synchronize(instance(dependency));
 
-    /// When
-    stopStream.next(IGNORE);
-    Numbers.range(0, 1000).forEach(() => progressStartStream.next(true));
-    Numbers.range(0, 1000).forEach(() => progressEndStream.next(false));
+      /// When
+      stopStream.next(IGNORE);
+      Numbers.range(0, 1000).forEach(() => progressStartStream.next(true));
+      Numbers.range(0, 1000).forEach(() => progressEndStream.next(false));
 
-    /// Then
-    verify(progressReceiver.next(anything())).never();
-  });
+      setTimeout(() => {
+        /// Then
+        verify(progressReceiver.next(anything())).never();
+        done();
+      }, asyncWait);
+    },
+    asyncTimeout
+  );
 
   it(
-    'Streaming progress flag with sequal streams - should emit flags in correct order',
+    'Streaming progress flags - should emit flags in correct order',
     done => {
       /// Setup
       let fetchSync = new FetchSync(progressSync);
       let paramStream = new Subject<Try<number>>();
       let resultReceiver: NextObserver<number> = spy({next: () => {}});
-      let paramStreamDelay = 10;
-      let assertDelay = 100;
+      let parameters: Try<number>[] = [
+        Try.success(0),
+        Try.failure<number>(''),
+        Try.success(1),
+      ];
+      let paramStreamDelay = asyncWait / (parameters.length + 1);
 
       fetchSync.synchronize<number, number>({
         allowDuplicateParams: false,
@@ -108,10 +119,7 @@ describe('Progress sync should work correctly', () => {
       });
 
       /// When
-      zip(
-        of(Try.success(0), Try.failure<number>(''), Try.success(1)),
-        timer(0, paramStreamDelay)
-      )
+      zip(of(...parameters), timer(0, paramStreamDelay))
         .pipe(
           doOnNext(([param]) => paramStream.next(param)),
           doOnCompleted(() => {
@@ -123,11 +131,11 @@ describe('Progress sync should work correctly', () => {
               });
 
               done();
-            }, assertDelay);
+            }, asyncWait);
           })
         )
         .subscribe();
     },
-    10000
+    asyncTimeout
   );
 });
