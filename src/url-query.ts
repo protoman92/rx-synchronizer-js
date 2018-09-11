@@ -1,5 +1,5 @@
 import {Never, Objects, Omit} from 'javascriptutilities';
-import {Observable, NextObserver} from 'rxjs';
+import {NextObserver, Observable} from 'rxjs';
 import {
   distinctUntilChanged,
   filter,
@@ -41,6 +41,7 @@ export class Impl implements Type {
 
   public synchronize<Query>(dependency: Depn<Query>) {
     let deepEqual = require('deep-equal');
+    let acceptablePathName = dependency.acceptableUrlPathName;
 
     this.triggerSync.synchronize<Query>({
       ...Objects.deleteKeys(
@@ -54,9 +55,7 @@ export class Impl implements Type {
       triggerStream: dependency.queryStream.pipe(
         distinctUntilChanged((query1, query2) => deepEqual(query1, query2)),
         withLatestFrom(dependency.urlPathNameStream),
-        filter(
-          ([_query, pathName]) => pathName === dependency.acceptableUrlPathName
-        ),
+        filter(([_query, pathName]) => pathName === acceptablePathName),
         map(([query]) => query)
       ),
     });
