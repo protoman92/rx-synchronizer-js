@@ -20,9 +20,9 @@ describe('Modify sync should work correctly', () => {
   let resultReceiver: NextObserver<number>;
 
   beforeEach(() => {
-    errorReceiver = spy({next: (_e: Error) => {}});
-    progressReceiver = spy({next: (_v: boolean) => {}});
-    resultReceiver = spy({next: (_v: number) => {}});
+    errorReceiver = spy({next: () => {}});
+    progressReceiver = spy({next: () => {}});
+    resultReceiver = spy({next: () => {}});
 
     dependency = spy<ModifyDepn<number, number>>({
       allowDuplicateParams: false,
@@ -65,7 +65,9 @@ describe('Modify sync should work correctly', () => {
     let error = new Error('error');
     let paramStream = new Subject<Try<number>>();
     when(dependency.paramStream).thenReturn(paramStream);
-    when(dependency.validateParam(anything())).thenReturn(throwError(error));
+    when(dependency.validateParam(0)).thenReturn(throwError(error));
+    when(dependency.validateParam(1)).thenReturn(of([error, error]));
+    when(dependency.validateParam(2)).thenReturn([error, error]);
     synchronizer.synchronize(instance(dependency));
     let progressDepn = capture(progressSync.synchronize).first()[0];
     progressDepn.progressStartStream.subscribe({...instance(progressReceiver)});
@@ -73,13 +75,13 @@ describe('Modify sync should work correctly', () => {
 
     /// When
     paramStream.next(Try.success(0));
+    paramStream.next(Try.success(1));
+    paramStream.next(Try.success(2));
 
     /// Then
-    expect(capture(errorReceiver.next).first()[0].message).toEqual(
-      error.message
-    );
-    verify(progressReceiver.next(true)).once();
-    verify(progressReceiver.next(false)).once();
+    verify(errorReceiver.next(anything())).times(5);
+    verify(progressReceiver.next(true)).times(3);
+    verify(progressReceiver.next(false)).times(3);
     verify(resultReceiver.next(anything())).never();
   });
 
