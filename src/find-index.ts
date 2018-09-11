@@ -2,11 +2,11 @@ import {Collections, Never, Omit, Try} from 'javascriptutilities';
 import {mapNonNilOrEmpty} from 'rx-utilities-js';
 import {combineLatest, NextObserver, Observable, OperatorFunction} from 'rxjs';
 import {distinctUntilChanged, map} from 'rxjs/operators';
-import {Depn as TriggerDepn, Type as TriggerSync} from './trigger';
+import * as TriggerSync from './trigger';
 let deepEqual = require('deep-equal');
 
 export type Depn<T> = Omit<
-  TriggerDepn<number>,
+  TriggerSync.Depn<number>,
   'triggerReceiver' | 'triggerStream'
 > &
   Readonly<{
@@ -35,10 +35,12 @@ export type Type = Readonly<{
  * property) and emit that.
  */
 export class Impl implements Type {
-  private readonly triggerSync: TriggerSync;
+  private readonly triggerSync: TriggerSync.Type;
 
-  public constructor(triggerSync: TriggerSync) {
-    this.triggerSync = triggerSync;
+  public constructor();
+  public constructor(triggerSync: TriggerSync.Type);
+  public constructor(triggerSync?: TriggerSync.Type) {
+    this.triggerSync = triggerSync || new TriggerSync.Impl();
   }
 
   public synchronize<T>(dependency: Depn<T>) {

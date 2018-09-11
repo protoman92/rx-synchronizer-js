@@ -252,4 +252,9 @@ describe('Fetch sync should work correctly', () => {
     },
     asyncTimeout
   );
+
+  it('Constructing synchronizer with default arguments - should work', () => {
+    let synchronizer2 = new FetchSync();
+    synchronizer2.synchronize(instance(dependency));
+  });
 });

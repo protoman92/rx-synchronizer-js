@@ -18,9 +18,12 @@ import {
   switchMap,
   takeUntil,
 } from 'rxjs/operators';
-import {Depn as ProgressDepn, Type as ProgressSync} from './progress';
+import * as ProgressSync from './progress';
 
-export type BaseDepn = Pick<ProgressDepn, 'progressReceiver' | 'stopStream'> &
+export type BaseDepn = Pick<
+  ProgressSync.Depn,
+  'progressReceiver' | 'stopStream'
+> &
   Readonly<{
     /**
      * If this is true, duplicate params will be filtered out with an operator.
@@ -54,11 +57,13 @@ export type Type = Readonly<{
 }>;
 
 export class Impl implements Type {
-  private readonly progressSync: ProgressSync;
+  private readonly progressSync: ProgressSync.Type;
   private readonly subscription: Subscription;
 
-  public constructor(progressSync: ProgressSync) {
-    this.progressSync = progressSync;
+  public constructor();
+  public constructor(progressSync: ProgressSync.Type);
+  public constructor(progressSync?: ProgressSync.Type) {
+    this.progressSync = progressSync || new ProgressSync.Impl();
     this.subscription = new Subscription();
   }
 

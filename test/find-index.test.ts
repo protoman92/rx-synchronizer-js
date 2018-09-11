@@ -139,4 +139,9 @@ describe('Find index synchronizer should work correctly', () => {
     },
     asyncTimeout
   );
+
+  it('Constructing synchronizer with default arguments - should work', () => {
+    let synchronizer2 = new FindIndexSync();
+    synchronizer2.synchronize(instance(dependency));
+  });
 });
