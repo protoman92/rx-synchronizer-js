@@ -2,6 +2,7 @@ import {IGNORE, Ignore, Numbers, Try} from 'javascriptutilities';
 import {NEVER, NextObserver, Subject} from 'rxjs';
 import {Depn as TriggerDepn, Impl as TriggerSync} from 'trigger';
 import {anything, instance, spy, verify, when} from 'ts-mockito-2';
+import {asyncWait, asyncTimeout} from './test-util';
 
 describe('Trigger sync should work correctly', () => {
   let dependency: TriggerDepn;
@@ -20,33 +21,47 @@ describe('Trigger sync should work correctly', () => {
     synchronizer = new TriggerSync();
   });
 
-  it('Sending trigger - should invoke trigger receiver', () => {
-    /// Setup
-    let triggerStream = new Subject<Ignore>();
-    when(dependency.triggerStream).thenReturn(triggerStream);
-    synchronizer.synchronize(instance(dependency));
+  it(
+    'Sending trigger - should invoke trigger receiver',
+    done => {
+      /// Setup
+      let triggerStream = new Subject<Ignore>();
+      when(dependency.triggerStream).thenReturn(triggerStream);
+      synchronizer.synchronize(instance(dependency));
 
-    /// When
-    triggerStream.next(IGNORE);
+      /// When
+      triggerStream.next(IGNORE);
 
-    /// Then
-    verify(triggerReceiver.next(anything())).once();
-  });
+      setTimeout(() => {
+        /// Then
+        verify(triggerReceiver.next(anything())).once();
+        done();
+      }, asyncWait);
+    },
+    asyncTimeout
+  );
 
-  it('Sending stop signal - should unsubscribe all streams', () => {
-    /// Setup
-    let triggerStream = new Subject<Ignore>();
-    let stopStream = new Subject<Ignore>();
-    when(dependency.triggerStream).thenReturn(triggerStream);
-    when(dependency.stopStream).thenReturn(stopStream);
-    synchronizer.synchronize(instance(dependency));
+  it(
+    'Sending stop signal - should unsubscribe all streams',
+    done => {
+      /// Setup
+      let triggerStream = new Subject<Ignore>();
+      let stopStream = new Subject<Ignore>();
+      when(dependency.triggerStream).thenReturn(triggerStream);
+      when(dependency.stopStream).thenReturn(stopStream);
+      synchronizer.synchronize(instance(dependency));
 
-    /// When
-    triggerStream.next(IGNORE);
-    stopStream.next(IGNORE);
-    Numbers.range(10, 1000).forEach(v => triggerStream.next(Try.success(v)));
+      /// When
+      triggerStream.next(IGNORE);
+      stopStream.next(IGNORE);
+      Numbers.range(10, 1000).forEach(v => triggerStream.next(Try.success(v)));
 
-    /// Then
-    verify(triggerReceiver.next(anything())).once();
-  });
+      setTimeout(() => {
+        /// Then
+        verify(triggerReceiver.next(anything())).once();
+        done();
+      }, asyncWait);
+    },
+    asyncTimeout
+  );
 });
