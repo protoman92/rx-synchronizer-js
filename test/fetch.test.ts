@@ -12,12 +12,13 @@ import {
 import {
   anyOfClass,
   anything,
+  capture,
   instance,
   spy,
   verify,
   when,
-  capture,
 } from 'ts-mockito-2';
+import {asyncTimeout, asyncWait} from './test-util';
 
 describe('Fetch sync should work correctly', () => {
   let dependency: FetchDepn<number, number>;
@@ -49,134 +50,186 @@ describe('Fetch sync should work correctly', () => {
     synchronizer = new FetchSync(instance(progressSync));
   });
 
-  it('Fetching result fails - should notify error', () => {
-    /// Setup
-    let paramStream = new Subject<Try<number>>();
-    when(dependency.paramStream).thenReturn(paramStream);
-    when(dependency.fetchWithParam(0)).thenReturn(of(0));
-    when(dependency.fetchWithParam(1)).thenReturn(throwError(new Error('')));
-    synchronizer.synchronize(instance(dependency));
-    let progressDepn = capture(progressSync.synchronize).first()[0];
-    progressDepn.progressStartStream.subscribe({...instance(progressReceiver)});
-    progressDepn.progressEndStream.subscribe({...instance(progressReceiver)});
+  it(
+    'Fetching result fails - should notify error',
+    done => {
+      /// Setup
+      let paramStream = new Subject<Try<number>>();
+      when(dependency.paramStream).thenReturn(paramStream);
+      when(dependency.fetchWithParam(0)).thenReturn(of(0));
+      when(dependency.fetchWithParam(1)).thenReturn(throwError(new Error('')));
+      synchronizer.synchronize(instance(dependency));
+      let progressDepn = capture(progressSync.synchronize).first()[0];
+      progressDepn.progressStartStream.subscribe({
+        ...instance(progressReceiver),
+      });
+      progressDepn.progressEndStream.subscribe({...instance(progressReceiver)});
 
-    /// When
-    paramStream.next(Try.success(0));
-    paramStream.next(Try.success(1));
-    paramStream.next(Try.failure('Invalid param'));
+      /// When
+      paramStream.next(Try.success(0));
+      paramStream.next(Try.success(1));
+      paramStream.next(Try.failure('Invalid param'));
 
-    /// Then
-    verify(errorReceiver.next(undefined)).once();
-    verify(errorReceiver.next(anyOfClass(Error))).twice();
-    verify(resultReceiver.next(anything())).once();
-    verify(progressReceiver.next(true)).times(3);
-    verify(progressReceiver.next(false)).times(3);
-  });
+      setTimeout(() => {
+        /// Then
+        verify(errorReceiver.next(undefined)).once();
+        verify(errorReceiver.next(anyOfClass(Error))).twice();
+        verify(resultReceiver.next(anything())).once();
+        verify(progressReceiver.next(true)).times(3);
+        verify(progressReceiver.next(false)).times(3);
+        done();
+      }, asyncWait);
+    },
+    asyncTimeout
+  );
 
-  it('Fetching result succeeds - should notify results receiver', () => {
-    /// Setup
-    let results = Numbers.randomBetween(0, 1000);
-    let paramStream = new Subject<Try<number>>();
-    when(dependency.paramStream).thenReturn(paramStream);
-    when(dependency.fetchWithParam(anything())).thenReturn(of(results));
-    synchronizer.synchronize(instance(dependency));
-    let progressDepn = capture(progressSync.synchronize).first()[0];
-    progressDepn.progressStartStream.subscribe({...instance(progressReceiver)});
-    progressDepn.progressEndStream.subscribe({...instance(progressReceiver)});
+  it(
+    'Fetching result succeeds - should notify results receiver',
+    done => {
+      /// Setup
+      let results = Numbers.randomBetween(0, 1000);
+      let paramStream = new Subject<Try<number>>();
+      when(dependency.paramStream).thenReturn(paramStream);
+      when(dependency.fetchWithParam(anything())).thenReturn(of(results));
+      synchronizer.synchronize(instance(dependency));
+      let progressDepn = capture(progressSync.synchronize).first()[0];
+      progressDepn.progressStartStream.subscribe({
+        ...instance(progressReceiver),
+      });
+      progressDepn.progressEndStream.subscribe({...instance(progressReceiver)});
 
-    /// When
-    paramStream.next(Try.success(0));
+      /// When
+      paramStream.next(Try.success(0));
 
-    /// Then
-    verify(resultReceiver.next(results)).once();
-    verify(progressReceiver.next(true)).once();
-    verify(progressReceiver.next(false)).once();
-  });
+      setTimeout(() => {
+        /// Then
+        verify(resultReceiver.next(results)).once();
+        verify(progressReceiver.next(true)).once();
+        verify(progressReceiver.next(false)).once();
+        done();
+      }, asyncWait);
+    },
+    asyncTimeout
+  );
 
-  it('Fetching responses with duplicate params - should notify receiver once', () => {
-    /// Setup
-    let paramStream = new Subject<Try<number>>();
-    when(dependency.allowDuplicateParams).thenReturn(false);
-    when(dependency.paramStream).thenReturn(paramStream);
-    when(dependency.fetchWithParam(anything())).thenReturn(of(0));
-    synchronizer.synchronize(instance(dependency));
-    let progressDepn = capture(progressSync.synchronize).first()[0];
-    progressDepn.progressStartStream.subscribe({...instance(progressReceiver)});
-    progressDepn.progressEndStream.subscribe({...instance(progressReceiver)});
+  it(
+    'Fetching responses with duplicate params - should notify receiver once',
+    done => {
+      /// Setup
+      let paramStream = new Subject<Try<number>>();
+      when(dependency.allowDuplicateParams).thenReturn(false);
+      when(dependency.paramStream).thenReturn(paramStream);
+      when(dependency.fetchWithParam(anything())).thenReturn(of(0));
+      synchronizer.synchronize(instance(dependency));
+      let progressDepn = capture(progressSync.synchronize).first()[0];
+      progressDepn.progressStartStream.subscribe({
+        ...instance(progressReceiver),
+      });
+      progressDepn.progressEndStream.subscribe({...instance(progressReceiver)});
 
-    /// When
-    Numbers.range(0, 1000).forEach(() => paramStream.next(Try.success(0)));
+      /// When
+      Numbers.range(0, 1000).forEach(() => paramStream.next(Try.success(0)));
 
-    /// Then
-    verify(resultReceiver.next(anything())).once();
-    verify(progressReceiver.next(true)).once();
-    verify(progressReceiver.next(false)).once();
-  });
+      setTimeout(() => {
+        /// Then
+        verify(resultReceiver.next(anything())).once();
+        verify(progressReceiver.next(true)).once();
+        verify(progressReceiver.next(false)).once();
+        done();
+      }, asyncWait);
+    },
+    asyncTimeout
+  );
 
-  it('Allowing duplicate params - should not filter out duplicate params', () => {
-    /// Setup
-    let times = 1000;
-    let paramStream = new Subject<Try<number>>();
-    when(dependency.allowDuplicateParams).thenReturn(true);
-    when(dependency.paramStream).thenReturn(paramStream);
-    when(dependency.fetchWithParam(anything())).thenReturn(of(0));
-    synchronizer.synchronize(instance(dependency));
-    let progressDepn = capture(progressSync.synchronize).first()[0];
-    progressDepn.progressStartStream.subscribe({...instance(progressReceiver)});
-    progressDepn.progressEndStream.subscribe({...instance(progressReceiver)});
+  it(
+    'Allowing duplicate params - should not filter out duplicate params',
+    done => {
+      /// Setup
+      let times = 1000;
+      let paramStream = new Subject<Try<number>>();
+      when(dependency.allowDuplicateParams).thenReturn(true);
+      when(dependency.paramStream).thenReturn(paramStream);
+      when(dependency.fetchWithParam(anything())).thenReturn(of(0));
+      synchronizer.synchronize(instance(dependency));
+      let progressDepn = capture(progressSync.synchronize).first()[0];
+      progressDepn.progressStartStream.subscribe({
+        ...instance(progressReceiver),
+      });
+      progressDepn.progressEndStream.subscribe({...instance(progressReceiver)});
 
-    /// When
-    Numbers.range(0, times).forEach(() => paramStream.next(Try.success(0)));
+      /// When
+      Numbers.range(0, times).forEach(() => paramStream.next(Try.success(0)));
 
-    /// Then
-    verify(resultReceiver.next(anything())).times(times);
-    verify(progressReceiver.next(true)).times(times);
-    verify(progressReceiver.next(false)).times(times);
-  });
+      setTimeout(() => {
+        /// Then
+        verify(resultReceiver.next(anything())).times(times);
+        verify(progressReceiver.next(true)).times(times);
+        verify(progressReceiver.next(false)).times(times);
+        done();
+      }, asyncWait);
+    },
+    asyncTimeout
+  );
 
-  it('Allowing invalid result - should not filter out invalid results', () => {
-    /// Setup
-    let times = 1000;
-    let paramStream = new Subject<Try<number>>();
-    when(dependency.allowDuplicateParams).thenReturn(true);
-    when(dependency.allowInvalidResult).thenReturn(true);
-    when(dependency.paramStream).thenReturn(paramStream);
-    when(dependency.fetchWithParam(anything())).thenReturn(
-      throwError(new Error(''))
-    );
-    synchronizer.synchronize(instance(dependency));
-    let progressDepn = capture(progressSync.synchronize).first()[0];
-    progressDepn.progressStartStream.subscribe({...instance(progressReceiver)});
-    progressDepn.progressEndStream.subscribe({...instance(progressReceiver)});
+  it(
+    'Allowing invalid result - should not filter out invalid results',
+    done => {
+      /// Setup
+      let times = 1000;
+      let paramStream = new Subject<Try<number>>();
+      when(dependency.allowDuplicateParams).thenReturn(true);
+      when(dependency.allowInvalidResult).thenReturn(true);
+      when(dependency.paramStream).thenReturn(paramStream);
+      when(dependency.fetchWithParam(anything())).thenReturn(
+        throwError(new Error(''))
+      );
+      synchronizer.synchronize(instance(dependency));
+      let progressDepn = capture(progressSync.synchronize).first()[0];
+      progressDepn.progressStartStream.subscribe({
+        ...instance(progressReceiver),
+      });
+      progressDepn.progressEndStream.subscribe({...instance(progressReceiver)});
 
-    /// When
-    Numbers.range(0, times).forEach(() => paramStream.next(Try.success(0)));
+      /// When
+      Numbers.range(0, times).forEach(() => paramStream.next(Try.success(0)));
 
-    /// Then
-    verify(resultReceiver.next(anything())).times(times);
-    verify(errorReceiver.next(anything())).times(times);
-    verify(progressReceiver.next(true)).times(times);
-    verify(progressReceiver.next(false)).times(times);
-  });
+      setTimeout(() => {
+        /// Then
+        verify(resultReceiver.next(anything())).times(times);
+        verify(errorReceiver.next(anything())).times(times);
+        verify(progressReceiver.next(true)).times(times);
+        verify(progressReceiver.next(false)).times(times);
+        done();
+      }, asyncWait);
+    },
+    asyncTimeout
+  );
 
-  it('Sending stop signal - should unsubscribe all streams', () => {
-    /// Setup
-    let paramStream = new Subject<Try<number>>();
-    let stopStream = new Subject<Ignore>();
-    when(dependency.paramStream).thenReturn(paramStream);
-    when(dependency.stopStream).thenReturn(stopStream);
-    when(dependency.fetchWithParam(anything())).thenReturn(of(0));
-    synchronizer.synchronize(instance(dependency));
+  it(
+    'Sending stop signal - should unsubscribe all streams',
+    done => {
+      /// Setup
+      let paramStream = new Subject<Try<number>>();
+      let stopStream = new Subject<Ignore>();
+      when(dependency.paramStream).thenReturn(paramStream);
+      when(dependency.stopStream).thenReturn(stopStream);
+      when(dependency.fetchWithParam(anything())).thenReturn(of(0));
+      synchronizer.synchronize(instance(dependency));
 
-    /// When
-    paramStream.next(Try.success(0));
-    paramStream.next(Try.success(1));
-    stopStream.next(IGNORE);
-    Numbers.range(10, 1000).forEach(v => paramStream.next(Try.success(v)));
+      /// When
+      paramStream.next(Try.success(0));
+      paramStream.next(Try.success(1));
+      stopStream.next(IGNORE);
+      Numbers.range(10, 1000).forEach(v => paramStream.next(Try.success(v)));
 
-    /// Then
-    verify(resultReceiver.next(anything())).twice();
-  });
+      /// Then
+      setTimeout(() => {
+        verify(resultReceiver.next(anything())).twice();
+        done();
+      }, asyncWait);
+    },
+    asyncTimeout
+  );
 
   it(
     'Ignoring result receipt scheduler - should use a default scheduler',
@@ -195,8 +248,8 @@ describe('Fetch sync should work correctly', () => {
       setTimeout(() => {
         verify(resultReceiver.next(0)).once();
         done();
-      }, 10);
+      }, asyncWait);
     },
-    100
+    asyncTimeout
   );
 });
