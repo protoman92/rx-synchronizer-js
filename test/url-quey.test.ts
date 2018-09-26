@@ -28,8 +28,8 @@ describe('Url query sync should work correctly', () => {
       acceptableUrlPathName: '',
       queryStream: NEVER,
       stopStream: NEVER,
-      urlPathNameStream: NEVER,
       urlQueryReceiver: {...instance(urlQueryReceiver)},
+      currentUrlPathName: () => '',
     });
 
     triggerSync = mock(TriggerSync.Impl);
@@ -45,7 +45,7 @@ describe('Url query sync should work correctly', () => {
       let urlPathStream = new BehaviorSubject<Undefined<string>>(undefined);
       when(dependency.acceptableUrlPathName).thenReturn(acceptableUrlPath);
       when(dependency.queryStream).thenReturn(queryStream);
-      when(dependency.urlPathNameStream).thenReturn(urlPathStream);
+      when(dependency.currentUrlPathName()).thenCall(() => urlPathStream.value);
 
       urlQuerySync.synchronize(instance(dependency));
       let mappedDepn = capture(

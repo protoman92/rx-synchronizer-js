@@ -1,11 +1,6 @@
-import {Never, Objects, Omit} from 'javascriptutilities';
+import {Objects, Omit, Undefined} from 'javascriptutilities';
 import {NextObserver, Observable} from 'rxjs';
-import {
-  distinctUntilChanged,
-  filter,
-  map,
-  withLatestFrom,
-} from 'rxjs/operators';
+import {distinctUntilChanged, filter} from 'rxjs/operators';
 import * as TriggerSync from './trigger';
 
 export type Depn<Query> = Omit<
@@ -19,8 +14,8 @@ export type Depn<Query> = Omit<
     acceptableUrlPathName: string;
 
     queryStream: Observable<Query>;
-    urlPathNameStream: Observable<Never<string>>;
     urlQueryReceiver: NextObserver<Query>;
+    currentUrlPathName: () => Undefined<string>;
   }>;
 
 /**
@@ -48,15 +43,13 @@ export class Impl implements Type {
         dependency,
         'acceptableUrlPathName',
         'queryStream',
-        'urlPathNameStream',
+        'currentUrlPathName',
         'urlQueryReceiver'
       ),
       triggerReceiver: dependency.urlQueryReceiver,
       triggerStream: dependency.queryStream.pipe(
         distinctUntilChanged((query1, query2) => deepEqual(query1, query2)),
-        withLatestFrom(dependency.urlPathNameStream),
-        filter(([_query, pathName]) => pathName === acceptablePathName),
-        map(([query]) => query)
+        filter(() => acceptablePathName === dependency.currentUrlPathName())
       ),
     });
   }
