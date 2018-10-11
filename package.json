@@ -7,10 +7,9 @@
   "typings": "./dist/src/index.d.ts",
   "scripts": {
     "setup": "npm install",
-    "build": "tsc",
     "test": "jest --coverage",
     "coveralls": "cat ./coverage/lcov.info | coveralls",
-    "prepublish": "rm -rf ./dist && tsc"
+    "prepublishOnly": "rm -rf ./dist && tsc"
   },
   "repository": {
     "type": "git",
