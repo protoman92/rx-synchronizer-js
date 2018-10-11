@@ -19,6 +19,8 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 import * as ProgressSync from './progress';
+import {ObservableConvertible} from './type';
+import {createObservable} from './sync-util';
 
 export type BaseDepn = Pick<
   ProgressSync.Depn,
@@ -46,7 +48,7 @@ export type Depn<Param, Result> = BaseDepn &
   Readonly<{
     paramStream: Observable<Try<Param>>;
     resultReceiver: NextObserver<Never<Result>>;
-    fetchWithParam: (params: Param) => Observable<Result>;
+    fetchWithParam: (params: Param) => ObservableConvertible<Result>;
   }>;
 
 /**
@@ -89,7 +91,7 @@ export class Impl implements Type {
         try {
           let actualParam = param.getOrThrow();
 
-          return dependency.fetchWithParam(actualParam).pipe(
+          return createObservable(dependency.fetchWithParam(actualParam)).pipe(
             map(v1 => Try.success(v1)),
             catchJustReturn(e => Try.failure(e))
           );
