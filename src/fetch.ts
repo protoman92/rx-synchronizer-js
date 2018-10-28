@@ -9,6 +9,7 @@ import {
   OperatorFunction,
   SchedulerLike,
   Subscription,
+  ObservableInput,
 } from 'rxjs';
 import {
   distinctUntilChanged,
@@ -19,7 +20,6 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 import * as ProgressSync from './progress';
-import {ObservableConvertible} from './type';
 import {createObservable} from './sync-util';
 
 export type BaseDepn = Pick<
@@ -48,7 +48,7 @@ export type Depn<Param, Result> = BaseDepn &
   Readonly<{
     paramStream: Observable<Try<Param>>;
     resultReceiver: NextObserver<Never<Result>>;
-    fetchWithParam: (params: Param) => ObservableConvertible<Result>;
+    fetchWithParam: (params: Param) => ObservableInput<Result>;
   }>;
 
 /**

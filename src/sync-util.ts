@@ -1,13 +1,5 @@
-import {from, Observable} from 'rxjs';
-import {ObservableConvertible} from './type';
+import {from, ObservableInput} from 'rxjs';
 
-export function createObservable<T>(source: ObservableConvertible<T>) {
-  if (source instanceof Observable) {
-    return source;
-  }
-  if (source instanceof Promise) {
-    return from(source);
-  } else {
-    return from(Promise.resolve(source));
-  }
+export function createObservable<T>(source: ObservableInput<T>) {
+  return from(source);
 }

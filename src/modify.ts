@@ -10,6 +10,7 @@ import {
   MonoTypeOperatorFunction,
   NextObserver,
   Observable,
+  ObservableInput,
   of,
   SchedulerLike,
   Subscription,
@@ -24,7 +25,6 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 import * as ProgressSync from './progress';
-import {ObservableConvertible} from './type';
 import {createObservable} from './sync-util';
 
 export type BaseDepn = Pick<
@@ -47,7 +47,7 @@ export type Depn<Param, Result> = BaseDepn &
     paramStream: Observable<Try<Param>>;
     resultReceiver: NextObserver<Never<Result>>;
     validateParam: (param: Param) => Error[] | Observable<Error[]>;
-    modifyWithParam: (params: Param) => ObservableConvertible<Result>;
+    modifyWithParam: (params: Param) => ObservableInput<Result>;
   }>;
 
 /**
