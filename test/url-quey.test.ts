@@ -1,10 +1,16 @@
 import {Undefined} from 'javascriptutilities';
-import {BehaviorSubject, NEVER, NextObserver, Subject} from 'rxjs';
+import {
+  BehaviorSubject,
+  NEVER,
+  NextObserver,
+  queueScheduler,
+  Subject,
+} from 'rxjs';
 import * as TriggerSync from 'trigger';
 import {
   anything,
   capture,
-  deepEqual,
+  deepEqual as tsDeepEqual,
   instance,
   mock,
   spy,
@@ -26,6 +32,8 @@ describe('Url query sync should work correctly', () => {
 
     dependency = spy<UrlQuerySync.Depn<Query>>({
       acceptableUrlPathName: '',
+      asyncOperatorScheduler: queueScheduler,
+      queryDebounceTime: undefined,
       queryStream: NEVER,
       stopStream: NEVER,
       urlQueryReceiver: {...instance(urlQueryReceiver)},
@@ -63,13 +71,47 @@ describe('Url query sync should work correctly', () => {
       queryStream.next({a: '2', b: '3'});
       queryStream.next({a: '3', b: '4'});
       urlPathStream.next(acceptableUrlPath);
+      queryStream.next({a: '3', b: '4'});
+      queryStream.next({a: '3', b: '4'});
 
       setTimeout(() => {
         /// Then
-        verify(urlQueryReceiver.next(anything())).times(2);
-        verify(urlQueryReceiver.next(deepEqual({a: '1', b: '2'}))).once();
-        verify(urlQueryReceiver.next(deepEqual({a: '2', b: '3'}))).once();
-        verify(urlQueryReceiver.next(deepEqual({a: '3', b: '4'}))).never();
+        verify(urlQueryReceiver.next(anything())).times(3);
+        verify(urlQueryReceiver.next(tsDeepEqual({a: '1', b: '2'}))).once();
+        verify(urlQueryReceiver.next(tsDeepEqual({a: '2', b: '3'}))).once();
+        verify(urlQueryReceiver.next(tsDeepEqual({a: '3', b: '4'}))).once();
+        done();
+      }, asyncWait);
+    },
+    asyncTimeout
+  );
+
+  it(
+    'Debouncing queries - should bounce events too close together',
+    done => {
+      /// Setup
+      let acceptableUrlPath = 'acceptable-url';
+      let queryStream = new Subject<Query>();
+      when(dependency.queryStream).thenReturn(queryStream);
+      when(dependency.acceptableUrlPathName).thenReturn(acceptableUrlPath);
+      when(dependency.currentUrlPathName()).thenReturn(acceptableUrlPath);
+      when(dependency.queryDebounceTime).thenReturn(100);
+
+      urlQuerySync.synchronize(instance(dependency));
+      let mappedDepn = capture(
+        triggerSync.synchronize
+      ).first()[0] as TriggerSync.Depn<Query>;
+
+      mappedDepn.triggerStream.subscribe({...instance(urlQueryReceiver)});
+
+      /// When
+      for (let i = 0; i < 1000; i += 1) {
+        queryStream.next({a: `${i}`, b: `${i + 1}`});
+      }
+
+      setTimeout(() => {
+        /// Then
+        verify(urlQueryReceiver.next(anything())).once();
         done();
       }, asyncWait);
     },

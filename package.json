@@ -31,6 +31,7 @@
     "rx-utilities-js": "^1.0.2"
   },
   "devDependencies": {
+    "@types/deep-equal": "^1.0.1",
     "@types/jest": "^23.3.1",
     "@types/node": "^10.5.5",
     "coveralls": "^3.0.2",

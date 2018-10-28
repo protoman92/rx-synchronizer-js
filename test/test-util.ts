@@ -1,2 +1,2 @@
-export let asyncWait = 100;
+export let asyncWait = 500;
 export let asyncTimeout = 1000;

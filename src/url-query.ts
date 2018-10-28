@@ -1,6 +1,11 @@
 import {Objects, Omit, Undefined} from 'javascriptutilities';
-import {NextObserver, Observable} from 'rxjs';
-import {distinctUntilChanged, filter} from 'rxjs/operators';
+import {
+  MonoTypeOperatorFunction,
+  NextObserver,
+  Observable,
+  SchedulerLike,
+} from 'rxjs';
+import {debounceTime, distinctUntilChanged, filter} from 'rxjs/operators';
 import * as TriggerSync from './trigger';
 
 export type Depn<Query> = Omit<
@@ -12,6 +17,14 @@ export type Depn<Query> = Omit<
      * Only accept the query if the current url matches this pathname.
      */
     acceptableUrlPathName: string;
+
+    /**
+     * State may mutate repeatedly, which may rapidly change the displayed url
+     * making for ugly UI. This debounce time takes only the last query that
+     * is not followed by anything else after a certain time.
+     */
+    queryDebounceTime?: number;
+    asyncOperatorScheduler?: SchedulerLike;
 
     queryStream: Observable<Query>;
     urlQueryReceiver: NextObserver<Query>;
@@ -42,14 +55,25 @@ export class Impl implements Type {
       ...Objects.deleteKeys(
         dependency,
         'acceptableUrlPathName',
+        'asyncOperatorScheduler',
+        'queryDebounceTime',
         'queryStream',
         'currentUrlPathName',
         'urlQueryReceiver'
       ),
       triggerReceiver: dependency.urlQueryReceiver,
       triggerStream: dependency.queryStream.pipe(
-        distinctUntilChanged((query1, query2) => deepEqual(query1, query2)),
-        filter(() => acceptablePathName === dependency.currentUrlPathName())
+        filter(() => acceptablePathName === dependency.currentUrlPathName()),
+        ((): MonoTypeOperatorFunction<Query> => {
+          const queryDebounce = dependency.queryDebounceTime;
+
+          if (queryDebounce) {
+            return obs => obs.pipe(debounceTime(queryDebounce));
+          }
+
+          return obs => obs;
+        })(),
+        distinctUntilChanged((query1, query2) => deepEqual(query1, query2))
       ),
     });
   }
