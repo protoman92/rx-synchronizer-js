@@ -1,9 +1,14 @@
-import {Collections, Never, Omit, Try} from 'javascriptutilities';
-import {mapNonNilOrEmpty} from 'rx-utilities-js';
-import {combineLatest, NextObserver, Observable, OperatorFunction} from 'rxjs';
-import {distinctUntilChanged, map} from 'rxjs/operators';
+import { Collections, Never, Omit, Try } from 'javascriptutilities';
+import { mapNonNilOrEmpty } from 'rx-utilities-js';
+import {
+  combineLatest,
+  NextObserver,
+  Observable,
+  OperatorFunction
+} from 'rxjs';
+import { distinctUntilChanged, map } from 'rxjs/operators';
 import * as TriggerSync from './trigger';
-let deepEqual = require('deep-equal');
+import deepEqual = require('deep-equal');
 
 export type Depn<T> = Omit<
   TriggerSync.Depn<number>,
@@ -72,12 +77,12 @@ export class Impl implements Type {
         (v1, v2) =>
           v1
             .zipWith(v2, (objects, prop) => {
-              let object2: Partial<T> = keys
-                .map(k => ({[k]: prop}))
+              const object2: Partial<T> = keys
+                .map(k => ({ [k]: prop }))
                 .reduce((acc, obj) => Object.assign(acc, obj)) as Partial<T>;
 
               return Collections.indexOf(objects, object2, (v3, v4) => {
-                for (let key of keys) {
+                for (const key of keys) {
                   if (deepEqual(v3[key], v4[key])) {
                     return true;
                   }
@@ -91,12 +96,12 @@ export class Impl implements Type {
         ((): OperatorFunction<Try<number>, Never<number>> => {
           if (dependency.allowInvalidResult) {
             return map(v => v.value);
-          } else {
-            return mapNonNilOrEmpty(v => v.value);
           }
+
+          return mapNonNilOrEmpty(v => v.value);
         })(),
         distinctUntilChanged()
-      ),
+      )
     });
   }
 }

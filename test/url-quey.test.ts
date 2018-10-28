@@ -48,15 +48,15 @@ describe('Url query sync should work correctly', () => {
     'Invoking synchronization - should map to base dependency',
     done => {
       /// Setup
-      let acceptableUrlPath = 'acceptable-url';
-      let queryStream = new Subject<Query>();
-      let urlPathStream = new BehaviorSubject<Undefined<string>>(undefined);
+      const acceptableUrlPath = 'acceptable-url';
+      const queryStream = new Subject<Query>();
+      const urlPathStream = new BehaviorSubject<Undefined<string>>(undefined);
       when(dependency.acceptableUrlPathName).thenReturn(acceptableUrlPath);
       when(dependency.queryStream).thenReturn(queryStream);
       when(dependency.currentUrlPathName()).thenCall(() => urlPathStream.value);
 
       urlQuerySync.synchronize(instance(dependency));
-      let mappedDepn = capture(
+      const mappedDepn = capture(
         triggerSync.synchronize
       ).first()[0] as TriggerSync.Depn<Query>;
 
@@ -90,15 +90,15 @@ describe('Url query sync should work correctly', () => {
     'Debouncing queries - should bounce events too close together',
     done => {
       /// Setup
-      let acceptableUrlPath = 'acceptable-url';
-      let queryStream = new Subject<Query>();
+      const acceptableUrlPath = 'acceptable-url';
+      const queryStream = new Subject<Query>();
       when(dependency.queryStream).thenReturn(queryStream);
       when(dependency.acceptableUrlPathName).thenReturn(acceptableUrlPath);
       when(dependency.currentUrlPathName()).thenReturn(acceptableUrlPath);
       when(dependency.queryDebounceTime).thenReturn(100);
 
       urlQuerySync.synchronize(instance(dependency));
-      let mappedDepn = capture(
+      const mappedDepn = capture(
         triggerSync.synchronize
       ).first()[0] as TriggerSync.Depn<Query>;
 
@@ -119,7 +119,7 @@ describe('Url query sync should work correctly', () => {
   );
 
   it('Constructing synchronizer with default arguments - should work', () => {
-    let urlQuerySync2 = new UrlQuerySync.Impl();
+    const urlQuerySync2 = new UrlQuerySync.Impl();
     urlQuerySync2.synchronize(instance(dependency));
   });
 });

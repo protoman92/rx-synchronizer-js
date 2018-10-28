@@ -25,7 +25,7 @@ describe('Trigger sync should work correctly', () => {
     'Sending trigger - should invoke trigger receiver',
     done => {
       /// Setup
-      let triggerStream = new Subject<Ignore>();
+      const triggerStream = new Subject<Ignore>();
       when(dependency.triggerStream).thenReturn(triggerStream);
       synchronizer.synchronize(instance(dependency));
 
@@ -45,8 +45,8 @@ describe('Trigger sync should work correctly', () => {
     'Sending stop signal - should unsubscribe all streams',
     done => {
       /// Setup
-      let triggerStream = new Subject<Ignore>();
-      let stopStream = new Subject<Ignore>();
+      const triggerStream = new Subject<Ignore>();
+      const stopStream = new Subject<Ignore>();
       when(dependency.triggerStream).thenReturn(triggerStream);
       when(dependency.stopStream).thenReturn(stopStream);
       synchronizer.synchronize(instance(dependency));

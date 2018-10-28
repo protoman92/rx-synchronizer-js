@@ -12,5 +12,5 @@ export {
   ModifySync,
   TriggerSync,
   ValidateSync,
-  UrlQuerySync,
+  UrlQuerySync
 };

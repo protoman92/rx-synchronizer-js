@@ -1,16 +1,16 @@
-import {Numbers, Strings, Try} from 'javascriptutilities';
-import {Depn as ModifyDepn, Impl as ModifySync} from 'modify';
-import {Type as ProgressSync} from 'progress';
+import { Numbers, Strings, Try } from 'javascriptutilities';
+import { Depn as ModifyDepn, Impl as ModifySync } from 'modify';
+import { Type as ProgressSync } from 'progress';
 import {
   NEVER,
   NextObserver,
   of,
   queueScheduler,
   Subject,
-  throwError,
+  throwError
 } from 'rxjs';
-import {anything, capture, instance, spy, verify, when} from 'ts-mockito-2';
-import {asyncTimeout, asyncWait} from './test-util';
+import { anything, capture, instance, spy, verify, when } from 'ts-mockito-2';
+import { asyncTimeout, asyncWait } from './test-util';
 
 describe('Modify sync should work correctly', () => {
   let dependency: ModifyDepn<number, number>;
@@ -21,24 +21,24 @@ describe('Modify sync should work correctly', () => {
   let resultReceiver: NextObserver<number>;
 
   beforeEach(() => {
-    errorReceiver = spy({next: () => {}});
-    progressReceiver = spy({next: () => {}});
-    resultReceiver = spy({next: () => {}});
+    errorReceiver = spy({ next: () => {} });
+    progressReceiver = spy({ next: () => {} });
+    resultReceiver = spy({ next: () => {} });
 
     dependency = spy<ModifyDepn<number, number>>({
       allowDuplicateParams: false,
       description: '',
-      errorReceiver: {...instance(errorReceiver)},
+      errorReceiver: { ...instance(errorReceiver) },
       modifyWithParam: () => NEVER,
       paramStream: NEVER,
-      progressReceiver: {...instance(progressReceiver)},
-      resultReceiver: {...instance(resultReceiver)},
+      progressReceiver: { ...instance(progressReceiver) },
+      resultReceiver: { ...instance(resultReceiver) },
       resultReceiptScheduler: queueScheduler,
       stopStream: NEVER,
-      validateParam: () => [],
+      validateParam: () => []
     });
 
-    progressSync = spy({synchronize: () => {}});
+    progressSync = spy({ synchronize: () => {} });
     synchronizer = new ModifySync(instance(progressSync));
   });
 
@@ -46,14 +46,16 @@ describe('Modify sync should work correctly', () => {
     'Streaming invalid params - should catch error',
     done => {
       /// Setup
-      let paramStream = new Subject<Try<number>>();
+      const paramStream = new Subject<Try<number>>();
       when(dependency.paramStream).thenReturn(paramStream);
       synchronizer.synchronize(instance(dependency));
-      let progressDepn = capture(progressSync.synchronize).first()[0];
+      const progressDepn = capture(progressSync.synchronize).first()[0];
       progressDepn.progressStartStream.subscribe({
-        ...instance(progressReceiver),
+        ...instance(progressReceiver)
       });
-      progressDepn.progressEndStream.subscribe({...instance(progressReceiver)});
+      progressDepn.progressEndStream.subscribe({
+        ...instance(progressReceiver)
+      });
 
       /// When
       paramStream.next(Try.failure('Error'));
@@ -74,18 +76,20 @@ describe('Modify sync should work correctly', () => {
     'Validating with failure stream - should catch error',
     done => {
       /// Setup
-      let error = new Error('error');
-      let paramStream = new Subject<Try<number>>();
+      const error = new Error('error');
+      const paramStream = new Subject<Try<number>>();
       when(dependency.paramStream).thenReturn(paramStream);
       when(dependency.validateParam(0)).thenReturn(throwError(error));
       when(dependency.validateParam(1)).thenReturn(of([error, error]));
       when(dependency.validateParam(2)).thenReturn([error, error]);
       synchronizer.synchronize(instance(dependency));
-      let progressDepn = capture(progressSync.synchronize).first()[0];
+      const progressDepn = capture(progressSync.synchronize).first()[0];
       progressDepn.progressStartStream.subscribe({
-        ...instance(progressReceiver),
+        ...instance(progressReceiver)
       });
-      progressDepn.progressEndStream.subscribe({...instance(progressReceiver)});
+      progressDepn.progressEndStream.subscribe({
+        ...instance(progressReceiver)
+      });
 
       /// When
       paramStream.next(Try.success(0));
@@ -108,27 +112,29 @@ describe('Modify sync should work correctly', () => {
     'Validating fails - should catch error',
     done => {
       /// Setup
-      let times = 1000;
-      let errors = Numbers.range(0, times).map(
+      const times = 1000;
+      const errors = Numbers.range(0, times).map(
         () => new Error(Strings.randomString(10))
       );
-      let paramStream = new Subject<Try<number>>();
+      const paramStream = new Subject<Try<number>>();
       when(dependency.paramStream).thenReturn(paramStream);
       when(dependency.validateParam(anything())).thenReturn(errors);
       synchronizer.synchronize(instance(dependency));
-      let progressDepn = capture(progressSync.synchronize).first()[0];
+      const progressDepn = capture(progressSync.synchronize).first()[0];
       progressDepn.progressStartStream.subscribe({
-        ...instance(progressReceiver),
+        ...instance(progressReceiver)
       });
-      progressDepn.progressEndStream.subscribe({...instance(progressReceiver)});
+      progressDepn.progressEndStream.subscribe({
+        ...instance(progressReceiver)
+      });
 
       /// When
       paramStream.next(Try.success(0));
 
       setTimeout(() => {
         /// Then
-        for (let i = 0; i < times; i++) {
-          let errMessage = capture(errorReceiver.next).byCallIndex(i)[0]
+        for (let i = 0; i < times; i += 1) {
+          const errMessage = capture(errorReceiver.next).byCallIndex(i)[0]
             .message;
           expect(errMessage).toEqual(errors[i].message);
         }
@@ -146,19 +152,21 @@ describe('Modify sync should work correctly', () => {
     'Modifying fails - should catch error',
     done => {
       /// Setup
-      let error = new Error('Error');
-      let paramStream = new Subject<Try<number>>();
+      const error = new Error('Error');
+      const paramStream = new Subject<Try<number>>();
       when(dependency.paramStream).thenReturn(paramStream);
       when(dependency.validateParam(anything())).thenReturn([]);
       when(dependency.modifyWithParam(anything())).thenReturn(
         throwError(error)
       );
       synchronizer.synchronize(instance(dependency));
-      let progressDepn = capture(progressSync.synchronize).first()[0];
+      const progressDepn = capture(progressSync.synchronize).first()[0];
       progressDepn.progressStartStream.subscribe({
-        ...instance(progressReceiver),
+        ...instance(progressReceiver)
       });
-      progressDepn.progressEndStream.subscribe({...instance(progressReceiver)});
+      progressDepn.progressEndStream.subscribe({
+        ...instance(progressReceiver)
+      });
 
       /// When
       paramStream.next(Try.success(0));
@@ -181,17 +189,19 @@ describe('Modify sync should work correctly', () => {
     'Modifying successfully - should trigger result receiver',
     done => {
       /// Setup
-      let result = 0;
-      let paramStream = new Subject<Try<number>>();
+      const result = 0;
+      const paramStream = new Subject<Try<number>>();
       when(dependency.paramStream).thenReturn(paramStream);
       when(dependency.validateParam(anything())).thenReturn([]);
       when(dependency.modifyWithParam(anything())).thenReturn(of(result));
       synchronizer.synchronize(instance(dependency));
-      let progressDepn = capture(progressSync.synchronize).first()[0];
+      const progressDepn = capture(progressSync.synchronize).first()[0];
       progressDepn.progressStartStream.subscribe({
-        ...instance(progressReceiver),
+        ...instance(progressReceiver)
       });
-      progressDepn.progressEndStream.subscribe({...instance(progressReceiver)});
+      progressDepn.progressEndStream.subscribe({
+        ...instance(progressReceiver)
+      });
 
       /// When
       paramStream.next(Try.success(0));
@@ -212,18 +222,20 @@ describe('Modify sync should work correctly', () => {
     'Failing to provide result scheduler - should use default scheduler',
     done => {
       /// Setup
-      let result = 0;
-      let paramStream = new Subject<Try<number>>();
+      const result = 0;
+      const paramStream = new Subject<Try<number>>();
       when(dependency.paramStream).thenReturn(paramStream);
       when(dependency.resultReceiptScheduler).thenReturn(undefined);
       when(dependency.validateParam(anything())).thenReturn([]);
       when(dependency.modifyWithParam(anything())).thenReturn(of(result));
       synchronizer.synchronize(instance(dependency));
-      let progressDepn = capture(progressSync.synchronize).first()[0];
+      const progressDepn = capture(progressSync.synchronize).first()[0];
       progressDepn.progressStartStream.subscribe({
-        ...instance(progressReceiver),
+        ...instance(progressReceiver)
       });
-      progressDepn.progressEndStream.subscribe({...instance(progressReceiver)});
+      progressDepn.progressEndStream.subscribe({
+        ...instance(progressReceiver)
+      });
 
       /// When
       paramStream.next(Try.success(0));
@@ -244,8 +256,8 @@ describe('Modify sync should work correctly', () => {
     'Streaming duplicate params - should only receive unique params',
     done => {
       /// Setup
-      let times = 1000;
-      let paramStream = new Subject<Try<number>>();
+      const times = 1000;
+      const paramStream = new Subject<Try<number>>();
       when(dependency.allowDuplicateParams).thenReturn(false);
       when(dependency.paramStream).thenReturn(paramStream);
       when(dependency.modifyWithParam(anything())).thenReturn(of(0));
@@ -267,8 +279,8 @@ describe('Modify sync should work correctly', () => {
     'Allowing duplicate params - should not filter out duplicate params',
     done => {
       /// Setup
-      let times = 1000;
-      let paramStream = new Subject<Try<number>>();
+      const times = 1000;
+      const paramStream = new Subject<Try<number>>();
       when(dependency.allowDuplicateParams).thenReturn(true);
       when(dependency.paramStream).thenReturn(paramStream);
       when(dependency.modifyWithParam(anything())).thenReturn(of(0));
@@ -288,7 +300,7 @@ describe('Modify sync should work correctly', () => {
   );
 
   it('Constructing synchronizer with default arguments - should work', () => {
-    let synchronizer2 = new ModifySync();
+    const synchronizer2 = new ModifySync();
     synchronizer2.synchronize(instance(dependency));
   });
 });

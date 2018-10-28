@@ -1,5 +1,5 @@
-import {Never, Try} from 'javascriptutilities';
-import {catchJustReturn, mapNonNilOrEmpty} from 'rx-utilities-js';
+import { Never, Try } from 'javascriptutilities';
+import { catchJustReturn, mapNonNilOrEmpty } from 'rx-utilities-js';
 import {
   asyncScheduler,
   MonoTypeOperatorFunction,
@@ -9,7 +9,7 @@ import {
   OperatorFunction,
   SchedulerLike,
   Subscription,
-  ObservableInput,
+  ObservableInput
 } from 'rxjs';
 import {
   distinctUntilChanged,
@@ -17,10 +17,11 @@ import {
   observeOn,
   share,
   switchMap,
-  takeUntil,
+  takeUntil
 } from 'rxjs/operators';
 import * as ProgressSync from './progress';
-import {createObservable} from './sync-util';
+import { createObservable } from './sync-util';
+import deepEqual = require('deep-equal');
 
 export type BaseDepn = Pick<
   ProgressSync.Depn,
@@ -70,26 +71,24 @@ export class Impl implements Type {
   }
 
   public synchronize<Param, Result>(dependency: Depn<Param, Result>) {
-    let subscription = this.subscription;
+    const subscription = this.subscription;
 
-    let fetchStream = dependency.paramStream.pipe(
+    const fetchStream = dependency.paramStream.pipe(
       ((): MonoTypeOperatorFunction<Try<Param>> => {
         if (dependency.allowDuplicateParams) {
           return v => v;
-        } else {
-          let deepEqual = require('deep-equal');
-
-          return v =>
-            v.pipe(
-              distinctUntilChanged((v1, v2) => {
-                return deepEqual(v1.value, v2.value);
-              })
-            );
         }
+
+        return v =>
+          v.pipe(
+            distinctUntilChanged((v1, v2) => {
+              return deepEqual(v1.value, v2.value);
+            })
+          );
       })(),
       map(param => {
         try {
-          let actualParam = param.getOrThrow();
+          const actualParam = param.getOrThrow();
 
           return createObservable(dependency.fetchWithParam(actualParam)).pipe(
             map(v1 => Try.success(v1)),
@@ -102,14 +101,14 @@ export class Impl implements Type {
       ((): MonoTypeOperatorFunction<Observable<Try<Result>>> => {
         if (dependency.resultReceiptScheduler) {
           return observeOn(dependency.resultReceiptScheduler);
-        } else {
-          return observeOn(asyncScheduler);
         }
+
+        return observeOn(asyncScheduler);
       })(),
       share()
     );
 
-    let fetchCompletedStream = fetchStream.pipe(
+    const fetchCompletedStream = fetchStream.pipe(
       switchMap(v => v),
       share()
     );
@@ -119,10 +118,10 @@ export class Impl implements Type {
         .pipe(
           ((): OperatorFunction<Try<Result>, Never<Result>> => {
             if (dependency.allowInvalidResult) {
-              return v => v.pipe(map(({value}) => value));
-            } else {
-              return v => v.pipe(mapNonNilOrEmpty(({value}) => value));
+              return v => v.pipe(map(({ value }) => value));
             }
+
+            return v => v.pipe(mapNonNilOrEmpty(({ value }) => value));
           })(),
           takeUntil(dependency.stopStream)
         )
@@ -132,7 +131,7 @@ export class Impl implements Type {
     subscription.add(
       fetchCompletedStream
         .pipe(
-          map(({error}) => error),
+          map(({ error }) => error),
           takeUntil(dependency.stopStream)
         )
         .subscribe(dependency.errorReceiver)
@@ -142,7 +141,7 @@ export class Impl implements Type {
       progressReceiver: dependency.progressReceiver,
       progressStartStream: fetchStream.pipe(map((): true => true)),
       progressEndStream: fetchCompletedStream.pipe(map((): false => false)),
-      stopStream: dependency.stopStream,
+      stopStream: dependency.stopStream
     });
   }
 }

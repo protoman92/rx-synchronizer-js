@@ -26,7 +26,7 @@ describe('Validate sync should work correctly', () => {
     'Streaming duplicate params - should receive only unique params',
     done => {
       /// Setup
-      let objectStream = new Subject<Try<number>>();
+      const objectStream = new Subject<Try<number>>();
       when(dependency.objectStream).thenReturn(objectStream);
       synchronizer.synchronize(instance(dependency));
 
@@ -46,8 +46,8 @@ describe('Validate sync should work correctly', () => {
     'Validating fails - should broadcast error',
     done => {
       /// Setup
-      let error = 'Error!!!';
-      let objectStream = new Subject<Try<number>>();
+      const error = 'Error!!!';
+      const objectStream = new Subject<Try<number>>();
       when(dependency.objectStream).thenReturn(objectStream);
       when(dependency.validateObject(anything())).thenCall(() => {
         throw new Error(error);
@@ -72,9 +72,9 @@ describe('Validate sync should work correctly', () => {
     'Validating fails with same error - should only broadcast uniques',
     done => {
       /// Setup
-      let times = 1000;
-      let error = 'Error!!!';
-      let objectStream = new Subject<Try<number>>();
+      const times = 1000;
+      const error = 'Error!!!';
+      const objectStream = new Subject<Try<number>>();
       when(dependency.objectStream).thenReturn(objectStream);
       when(dependency.validateObject(anything())).thenCall(() => {
         throw new Error(error);
@@ -100,8 +100,8 @@ describe('Validate sync should work correctly', () => {
     'Validating succeeds - should only broadcast uniques',
     done => {
       /// Setup
-      let times = 1000;
-      let objectStream = new Subject<Try<number>>();
+      const times = 1000;
+      const objectStream = new Subject<Try<number>>();
       when(dependency.objectStream).thenReturn(objectStream);
       when(dependency.validateObject(anything())).thenCall(() => {});
       synchronizer.synchronize(instance(dependency));
@@ -123,8 +123,8 @@ describe('Validate sync should work correctly', () => {
     'Sending stop signal - should unsubscribe all streams',
     done => {
       /// Setup
-      let objectStream = new Subject<Try<number>>();
-      let stopStream = new Subject<Ignore>();
+      const objectStream = new Subject<Try<number>>();
+      const stopStream = new Subject<Ignore>();
       when(dependency.objectStream).thenReturn(objectStream);
       when(dependency.stopStream).thenReturn(stopStream);
       synchronizer.synchronize(instance(dependency));

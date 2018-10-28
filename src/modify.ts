@@ -1,8 +1,8 @@
-import {Never, Try} from 'javascriptutilities';
+import { Never, Try } from 'javascriptutilities';
 import {
   catchJustReturn,
   flatMapIterable,
-  mapNonNilOrEmpty,
+  mapNonNilOrEmpty
 } from 'rx-utilities-js';
 import {
   asapScheduler,
@@ -13,7 +13,7 @@ import {
   ObservableInput,
   of,
   SchedulerLike,
-  Subscription,
+  Subscription
 } from 'rxjs';
 import {
   distinctUntilChanged,
@@ -22,10 +22,11 @@ import {
   observeOn,
   share,
   switchMap,
-  takeUntil,
+  takeUntil
 } from 'rxjs/operators';
 import * as ProgressSync from './progress';
-import {createObservable} from './sync-util';
+import { createObservable } from './sync-util';
+import deepEqual = require('deep-equal');
 
 export type BaseDepn = Pick<
   ProgressSync.Depn,
@@ -69,35 +70,33 @@ export class Impl implements Type {
   }
 
   public synchronize<Param, Result>(dependency: Depn<Param, Result>) {
-    let subscription = this.subscription;
+    const subscription = this.subscription;
 
-    let validateStartedStream = dependency.paramStream.pipe(
+    const validateStartedStream = dependency.paramStream.pipe(
       ((): MonoTypeOperatorFunction<Try<Param>> => {
         if (dependency.allowDuplicateParams) {
           return v => v;
-        } else {
-          let deepEqual = require('deep-equal');
-
-          return v =>
-            v.pipe(
-              distinctUntilChanged((v1, v2) => {
-                return deepEqual(v1.value, v2.value);
-              })
-            );
         }
+
+        return v =>
+          v.pipe(
+            distinctUntilChanged((v1, v2) => {
+              return deepEqual(v1.value, v2.value);
+            })
+          );
       })(),
       map(v =>
         v.map(
           (v1): Observable<[Param, Error[]]> => {
-            let validated = dependency.validateParam(v1);
+            const validated = dependency.validateParam(v1);
 
             if (validated instanceof Observable) {
               return validated.pipe(
                 map((errors): [Param, Error[]] => [v1, errors])
               );
-            } else {
-              return of([v1, validated] as [Param, Error[]]);
             }
+
+            return of([v1, validated] as [Param, Error[]]);
           }
         )
       ),
@@ -105,7 +104,7 @@ export class Impl implements Type {
       share()
     );
 
-    let validateCompletedStream = validateStartedStream.pipe(
+    const validateCompletedStream = validateStartedStream.pipe(
       switchMap((v: Try<Observable<[Param, Error[]]>>) => {
         try {
           return v.getOrThrow().pipe(
@@ -119,19 +118,19 @@ export class Impl implements Type {
       share()
     );
 
-    let argumentFailStream = validateCompletedStream.pipe(
+    const argumentFailStream = validateCompletedStream.pipe(
       mapNonNilOrEmpty(v => v.error),
       share()
     );
 
-    let validateFailStream = validateCompletedStream.pipe(
-      mapNonNilOrEmpty(({value}) => value),
+    const validateFailStream = validateCompletedStream.pipe(
+      mapNonNilOrEmpty(({ value }) => value),
       filter(v => v[1].length > 0),
       map((v): Error[] => v[1]),
       share()
     );
 
-    let modifyStream = validateCompletedStream.pipe(
+    const modifyStream = validateCompletedStream.pipe(
       mapNonNilOrEmpty(v => v.value),
       filter(v => v[1].length === 0),
       map(v => v[0]),
@@ -144,7 +143,7 @@ export class Impl implements Type {
       share()
     );
 
-    let modifyCompletedStream = modifyStream.pipe(
+    const modifyCompletedStream = modifyStream.pipe(
       switchMap(v => v),
       share()
     );
@@ -157,7 +156,7 @@ export class Impl implements Type {
         validateFailStream,
         modifyCompletedStream
       ).pipe(map((): false => false)),
-      stopStream: dependency.stopStream,
+      stopStream: dependency.stopStream
     });
 
     subscription.add(

@@ -1,6 +1,6 @@
-import {Ignore} from 'javascriptutilities';
-import {merge, NextObserver, Observable, Subscription} from 'rxjs';
-import {delay, takeUntil} from 'rxjs/operators';
+import { Ignore } from 'javascriptutilities';
+import { merge, NextObserver, Observable, Subscription } from 'rxjs';
+import { delay, takeUntil } from 'rxjs/operators';
 
 export type Depn = Readonly<{
   progressReceiver: NextObserver<boolean>;

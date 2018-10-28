@@ -1,7 +1,7 @@
-import {Ignore, Never, Try, Undefined} from 'javascriptutilities';
-import {NextObserver, Observable, of, Subscription} from 'rxjs';
-import {distinctUntilChanged, flatMap, takeUntil} from 'rxjs/operators';
-let deepEqual = require('deep-equal');
+import { Ignore, Never, Try, Undefined } from 'javascriptutilities';
+import { NextObserver, Observable, of, Subscription } from 'rxjs';
+import { distinctUntilChanged, flatMap, takeUntil } from 'rxjs/operators';
+const deepEqual = require('deep-equal');
 
 export type Depn<T> = Readonly<{
   objectStream: Observable<Try<T>>;
@@ -30,7 +30,7 @@ export class Impl implements Type {
         .pipe(
           distinctUntilChanged((v1, v2) => deepEqual(v1.value, v2.value)),
           flatMap(
-            ({value}): Observable<Undefined<Error>> => {
+            ({ value }): Observable<Undefined<Error>> => {
               try {
                 dependency.validateObject(value);
                 return of(undefined);

@@ -1,7 +1,7 @@
-import {Impl as FetchSync} from 'fetch';
-import {Booleans, Ignore, IGNORE, Numbers, Try} from 'javascriptutilities';
-import {Depn as ProgressDepn, Impl as ProgressSync} from 'progress';
-import {doOnCompleted, doOnNext} from 'rx-utilities-js';
+import { Impl as FetchSync } from 'fetch';
+import { Booleans, Ignore, IGNORE, Numbers, Try } from 'javascriptutilities';
+import { Depn as ProgressDepn, Impl as ProgressSync } from 'progress';
+import { doOnCompleted, doOnNext } from 'rx-utilities-js';
 import {
   asapScheduler,
   NEVER,
@@ -10,10 +10,10 @@ import {
   Subject,
   throwError,
   timer,
-  zip,
+  zip
 } from 'rxjs';
-import {anything, capture, instance, spy, verify, when} from 'ts-mockito-2';
-import {asyncWait, asyncTimeout} from './test-util';
+import { anything, capture, instance, spy, verify, when } from 'ts-mockito-2';
+import { asyncWait, asyncTimeout } from './test-util';
 
 describe('Progress sync should work correctly', () => {
   let dependency: ProgressDepn;
@@ -21,13 +21,13 @@ describe('Progress sync should work correctly', () => {
   let progressReceiver: NextObserver<boolean>;
 
   beforeEach(() => {
-    progressReceiver = spy({next: () => {}});
+    progressReceiver = spy({ next: () => {} });
 
     dependency = spy<ProgressDepn>({
-      progressReceiver: {...instance(progressReceiver)},
+      progressReceiver: { ...instance(progressReceiver) },
       progressStartStream: NEVER,
       progressEndStream: NEVER,
-      stopStream: NEVER,
+      stopStream: NEVER
     });
 
     progressSync = new ProgressSync();
@@ -37,8 +37,8 @@ describe('Progress sync should work correctly', () => {
     'Triggering progress events - should emit flags sequentially',
     done => {
       /// Setup
-      let progressStartStream = new Subject<true>();
-      let progressEndStream = new Subject<false>();
+      const progressStartStream = new Subject<true>();
+      const progressEndStream = new Subject<false>();
       when(dependency.progressStartStream).thenReturn(progressStartStream);
       when(dependency.progressEndStream).thenReturn(progressEndStream);
       progressSync.synchronize(instance(dependency));
@@ -63,9 +63,9 @@ describe('Progress sync should work correctly', () => {
     'Sending stop signal - should unsubscribe all streams',
     done => {
       /// Setup
-      let progressStartStream = new Subject<true>();
-      let progressEndStream = new Subject<false>();
-      let stopStream = new Subject<Ignore>();
+      const progressStartStream = new Subject<true>();
+      const progressEndStream = new Subject<false>();
+      const stopStream = new Subject<Ignore>();
       when(dependency.progressStartStream).thenReturn(progressStartStream);
       when(dependency.progressEndStream).thenReturn(progressEndStream);
       when(dependency.stopStream).thenReturn(stopStream);
@@ -89,33 +89,33 @@ describe('Progress sync should work correctly', () => {
     'Streaming progress flags - should emit flags in correct order',
     done => {
       /// Setup
-      let fetchSync = new FetchSync(progressSync);
-      let paramStream = new Subject<Try<number>>();
-      let resultReceiver: NextObserver<number> = spy({next: () => {}});
-      let parameters: Try<number>[] = [
+      const fetchSync = new FetchSync(progressSync);
+      const paramStream = new Subject<Try<number>>();
+      const resultReceiver: NextObserver<number> = spy({ next: () => {} });
+      const parameters: Try<number>[] = [
         Try.success(0),
         Try.failure<number>(''),
-        Try.success(1),
+        Try.success(1)
       ];
-      let paramStreamDelay = asyncWait / (parameters.length + 1);
+      const paramStreamDelay = asyncWait / (parameters.length + 1);
 
       fetchSync.synchronize<number, number>({
+        paramStream,
         allowDuplicateParams: false,
         allowInvalidResult: true,
         description: '',
-        errorReceiver: {next: () => {}},
-        progressReceiver: {...instance(progressReceiver)},
+        errorReceiver: { next: () => {} },
+        progressReceiver: { ...instance(progressReceiver) },
         fetchWithParam: () => {
           if (Booleans.random()) {
             return of(0);
-          } else {
-            return throwError(new Error('Error!'));
           }
+
+          return throwError(new Error('Error!'));
         },
-        paramStream,
         resultReceiptScheduler: asapScheduler,
-        resultReceiver: {...instance(resultReceiver)},
-        stopStream: NEVER,
+        resultReceiver: { ...instance(resultReceiver) },
+        stopStream: NEVER
       });
 
       /// When

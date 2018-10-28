@@ -1,12 +1,13 @@
-import {Objects, Omit, Undefined} from 'javascriptutilities';
+import { Objects, Omit, Undefined } from 'javascriptutilities';
 import {
   MonoTypeOperatorFunction,
   NextObserver,
   Observable,
-  SchedulerLike,
+  SchedulerLike
 } from 'rxjs';
-import {debounceTime, distinctUntilChanged, filter} from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import * as TriggerSync from './trigger';
+import deepEqual = require('deep-equal');
 
 export type Depn<Query> = Omit<
   TriggerSync.Depn<Query>,
@@ -48,8 +49,7 @@ export class Impl implements Type {
   }
 
   public synchronize<Query>(dependency: Depn<Query>) {
-    let deepEqual = require('deep-equal');
-    let acceptablePathName = dependency.acceptableUrlPathName;
+    const acceptablePathName = dependency.acceptableUrlPathName;
 
     this.triggerSync.synchronize<Query>({
       ...Objects.deleteKeys(
@@ -74,7 +74,7 @@ export class Impl implements Type {
           return obs => obs;
         })(),
         distinctUntilChanged((query1, query2) => deepEqual(query1, query2))
-      ),
+      )
     });
   }
 }
